@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Freelancer } from '@/lib/mock-data';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, DollarSign } from 'lucide-react';
 
 interface FreelancerCardProps {
   freelancer: Freelancer;
@@ -35,7 +35,7 @@ export function FreelancerCard({ freelancer }: FreelancerCardProps) {
         </div>
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span>{freelancer.location}</span>
-          <span className="font-semibold text-foreground">₹{freelancer.rate}/hr</span>
+          <span className="font-semibold text-foreground flex items-center gap-1"><DollarSign size={14} />{freelancer.rate}/hr</span>
         </div>
       </CardContent>
       <CardFooter className="p-2 bg-transparent">

@@ -45,14 +45,14 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 const defaultValues: Partial<ProfileFormValues> = {
   name: 'Priya Sharma',
   role: 'Senior UX/UI Designer',
-  rate: 5000,
-  location: 'Mumbai, MH',
-  bio: 'A passionate UX/UI designer with over 8 years of experience creating intuitive and beautiful digital experiences for the Indian market. I specialize in user-centered design methodologies to solve complex problems.',
+  rate: 65,
+  location: 'Mumbai, India',
+  bio: 'A passionate UX/UI designer with over 8 years of experience creating intuitive and beautiful digital experiences. I specialize in user-centered design methodologies to solve complex problems.',
   existingSkills: 'Figma, Sketch, Adobe XD, User Research, Prototyping',
-  pastExperiences: `Led the design team for a leading e-commerce platform, mentored junior designers, and established a new design system at DigiConnect India (2019 - Present). 
+  pastExperiences: `Led the design team for a leading e-commerce platform, mentored junior designers, and established a new design system at Digital Solutions Inc. (2019 - Present). 
 Worked on various client projects, from mobile apps to large-scale web applications at Creative Minds Studio (2016 - 2019).`,
   experience: [
-    { role: 'Lead UX Designer', company: 'DigiConnect India', period: '2019 - Present' },
+    { role: 'Lead UX Designer', company: 'Digital Solutions Inc.', period: '2019 - Present' },
     { role: 'UI/UX Designer', company: 'Creative Minds Studio', period: '2016 - 2019' },
   ]
 };
@@ -123,7 +123,7 @@ export default function ProfileForm() {
                 <FormItem><FormLabel>Professional Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="rate" render={({ field }) => (
-                <FormItem><FormLabel>Hourly Rate (₹)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Hourly Rate ($)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="location" render={({ field }) => (
                 <FormItem><FormLabel>Location</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>

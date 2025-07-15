@@ -10,7 +10,7 @@ const features = [
   {
     icon: <Search className="h-10 w-10 text-primary" />,
     title: 'Find Top Talent',
-    description: 'Access a vast pool of vetted freelancers from various fields across India. Our smart search helps you find the perfect match for your project requirements.'
+    description: 'Access a vast pool of vetted freelancers from various fields across the globe. Our smart search helps you find the perfect match for your project requirements.'
   },
   {
     icon: <Briefcase className="h-10 w-10 text-primary" />,
@@ -26,14 +26,14 @@ const features = [
 
 const testimonials = [
     {
-        quote: "GlobalGigs made it incredibly easy to find a talented developer in Bangalore. The platform is intuitive and the quality of freelancers is top-notch.",
-        name: "Aarav Patel",
+        quote: "GlobalGigs made it incredibly easy to find a talented developer. The platform is intuitive and the quality of freelancers is top-notch.",
+        name: "Alex Johnson",
         role: "Startup Founder",
         avatar: "https://placehold.co/48x48.png"
     },
     {
-        quote: "As a freelance designer, GlobalGigs has been a game-changer for me. I've found amazing projects and clients from all over the country.",
-        name: "Sneha Reddy",
+        quote: "As a freelance designer, GlobalGigs has been a game-changer for me. I've found amazing projects and clients from all over the world.",
+        name: "Maria Garcia",
         role: "UX/UI Designer",
         avatar: "https://placehold.co/48x48.png"
     }
@@ -52,7 +52,7 @@ export default function HomePage() {
           />
           <div className="container relative z-10 mx-auto px-4">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tighter mb-4 font-headline">
-              Connect with India's Finest Freelancers
+              Connect with the World's Finest Freelancers
             </h1>
             <p className="max-w-3xl mx-auto text-lg md:text-xl text-muted-foreground mb-8">
               GlobalGigs is the premier marketplace to hire expert freelance talent for your projects, or to find work that matters.
@@ -131,7 +131,7 @@ export default function HomePage() {
         {/* Testimonials Section */}
         <section className="py-16 md:py-24 bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto px-4">
-                <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 font-headline">Loved by People Across India</h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 font-headline">Loved by People Across the Globe</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {testimonials.map((testimonial, index) => (
                         <Card key={index} className="bg-card/50">
@@ -159,7 +159,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-headline">Ready to Get Started?</h2>
             <p className="max-w-2xl mx-auto text-lg text-muted-foreground mb-8">
-              Join thousands of Indian businesses and freelancers on GlobalGigs today.
+              Join thousands of businesses and freelancers on GlobalGigs today.
             </p>
             <Button asChild size="lg">
               <Link href="/login">Sign Up Now</Link>

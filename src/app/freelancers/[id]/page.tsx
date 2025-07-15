@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, MessageSquare, CheckCircle } from 'lucide-react';
+import { Globe, MessageSquare, CheckCircle, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FreelancerProfilePage({ params }: { params: { id: string } }) {
@@ -38,7 +38,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
               <div className="space-y-2 text-left text-sm text-muted-foreground">
                 <div className="flex items-center"><Globe className="w-4 h-4 mr-2 text-primary" /> {freelancer.location}</div>
                 <div className="flex items-center">
-                    <span className="w-4 h-4 mr-2 text-primary font-bold">₹</span> {freelancer.rate}/hr
+                    <DollarSign className="w-4 h-4 mr-2 text-primary" /> {freelancer.rate}/hr
                 </div>
                 <div className={`flex items-center ${freelancer.availability === 'Unavailable' ? 'text-destructive' : 'text-green-500'}`}>
                     <CheckCircle className="w-4 h-4 mr-2" /> {freelancer.availability}
