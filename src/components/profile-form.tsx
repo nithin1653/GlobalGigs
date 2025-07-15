@@ -1,0 +1,191 @@
+'use client';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { handleEnhanceSkills } from '@/app/actions';
+import { useState } from 'react';
+import { Wand2, Trash2, PlusCircle, Loader2 } from 'lucide-react';
+
+const profileFormSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+  role: z.string().min(2, { message: 'Role is required.' }),
+  rate: z.coerce.number().min(1, { message: 'Rate must be a positive number.' }),
+  location: z.string().min(2, { message: 'Location is required.' }),
+  bio: z.string().max(500, { message: 'Bio cannot exceed 500 characters.' }),
+  existingSkills: z.string().min(1, { message: 'Please list at least one skill.'}),
+  pastExperiences: z.string().min(10, { message: 'Please describe your past experiences.'}),
+  experience: z.array(z.object({
+    role: z.string().min(1, {message: 'Role is required'}),
+    company: z.string().min(1, {message: 'Company is required'}),
+    period: z.string().min(1, {message: 'Period is required'}),
+  })),
+});
+
+type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+const defaultValues: Partial<ProfileFormValues> = {
+  name: 'Alice Johnson',
+  role: 'Senior UX/UI Designer',
+  rate: 85,
+  location: 'San Francisco, CA',
+  bio: 'A passionate UX/UI designer with over 8 years of experience creating intuitive and beautiful digital experiences. I specialize in user-centered design methodologies to solve complex problems.',
+  existingSkills: 'Figma, Sketch, Adobe XD, User Research, Prototyping',
+  pastExperiences: `Led the design team for flagship products, mentored junior designers, and established a new design system at Innovate Inc. (2019 - Present). 
+Worked on various client projects, from mobile apps to large-scale web applications at Creative Solutions (2016 - 2019).`,
+  experience: [
+    { role: 'Lead UX Designer', company: 'Innovate Inc.', period: '2019 - Present' },
+    { role: 'UI/UX Designer', company: 'Creative Solutions', period: '2016 - 2019' },
+  ]
+};
+
+export default function ProfileForm() {
+  const { toast } = useToast();
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  
+  const form = useForm<ProfileFormValues>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues,
+    mode: 'onChange',
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'experience',
+  });
+
+  function onSubmit(data: ProfileFormValues) {
+    toast({
+      title: 'Profile Updated!',
+      description: 'Your changes have been saved successfully.',
+    });
+  }
+
+  async function onEnhanceSkills() {
+    setIsSuggesting(true);
+    const result = await handleEnhanceSkills({
+        pastExperiences: form.getValues('pastExperiences'),
+        existingSkills: form.getValues('existingSkills'),
+    });
+    setIsSuggesting(false);
+
+    if (result.success && result.data) {
+        const currentSkills = form.getValues('existingSkills').split(',').map(s => s.trim()).filter(Boolean);
+        const suggested = result.data.suggestedSkills.split(',').map(s => s.trim()).filter(Boolean);
+        const newSkills = [...new Set([...currentSkills, ...suggested])];
+        
+        form.setValue('existingSkills', newSkills.join(', '), { shouldValidate: true });
+        toast({
+            title: 'Skills Enhanced!',
+            description: 'We\'ve added some new skill suggestions to your profile.',
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Uh oh! Something went wrong.',
+            description: result.error || 'There was a problem with the AI suggestion.',
+        });
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card className="bg-background/60 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle>Personal Information</CardTitle>
+            <CardDescription>Update your personal details here.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="role" render={({ field }) => (
+                <FormItem><FormLabel>Professional Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="rate" render={({ field }) => (
+                <FormItem><FormLabel>Hourly Rate ($)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="location" render={({ field }) => (
+                <FormItem><FormLabel>Location</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <FormField control={form.control} name="bio" render={({ field }) => (
+              <FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea rows={5} {...field} /></FormControl><FormMessage /></FormItem>
+            )} />
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-background/60 backdrop-blur-xl">
+          <CardHeader>
+            <CardTitle>Skills & Experience</CardTitle>
+            <CardDescription>Showcase your expertise. Use the AI assistant to find new skills!</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <FormField control={form.control} name="pastExperiences" render={({ field }) => (
+                <FormItem><FormLabel>Describe Your Past Experiences</FormLabel><FormControl><Textarea rows={6} {...field} /></FormControl><FormMessage /></FormItem>
+            )}/>
+            <FormField control={form.control} name="existingSkills" render={({ field }) => (
+                <FormItem><FormLabel>Your Skills (comma-separated)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            )}/>
+            <Button type="button" onClick={onEnhanceSkills} disabled={isSuggesting}>
+              {isSuggesting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
+              Suggest Skills with AI
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-background/60 backdrop-blur-xl">
+            <CardHeader>
+                <CardTitle>Experience History</CardTitle>
+                <CardDescription>List your previous roles.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {fields.map((field, index) => (
+                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start mb-4 p-4 border rounded-lg">
+                        <FormField control={form.control} name={`experience.${index}.role`} render={({ field }) => (
+                            <FormItem className="md:col-span-1"><FormLabel>Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (
+                            <FormItem className="md:col-span-1"><FormLabel>Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name={`experience.${index}.period`} render={({ field }) => (
+                            <FormItem className="md:col-span-1"><FormLabel>Period</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <Button type="button" variant="ghost" size="icon" className="mt-6 text-destructive hover:bg-destructive/10" onClick={() => remove(index)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                ))}
+                 <Button type="button" variant="outline" size="sm" onClick={() => append({ role: '', company: '', period: '' })}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Experience
+                </Button>
+            </CardContent>
+        </Card>
+
+        <div className="flex justify-end">
+          <Button type="submit">Save Changes</Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
