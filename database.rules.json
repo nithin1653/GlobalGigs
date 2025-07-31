@@ -1,12 +1,6 @@
 {
   "rules": {
     ".read": "true",
-    ".write": "true",
-    "freelancers": {
-      ".indexOn": ["category", "location"]
-    },
-    "conversations": {
-      ".indexOn": ["clientUserId", "freelancerUserId"]
-    }
+    ".write": "true"
   }
 }

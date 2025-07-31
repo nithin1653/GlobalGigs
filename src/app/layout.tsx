@@ -1,11 +1,8 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { AuthProvider } from '@/hooks/use-auth.js';
 import { Suspense } from 'react';
-import { usePathname } from 'next/navigation';
-import Header from '@/components/header';
+import ClientLayout from '@/components/client-layout';
+
 
 export const metadata: Metadata = {
   title: 'GlobalGigs',
@@ -14,23 +11,6 @@ export const metadata: Metadata = {
     icon: '/favicon.svg',
   },
 };
-
-function ClientRootLayout({ children }: { children: React.ReactNode }) {
-  'use client';
-  const pathname = usePathname();
-  const isDashboard = pathname.startsWith('/dashboard');
-
-  return (
-    <AuthProvider>
-      <div className="relative flex min-h-screen w-full flex-col">
-        {!isDashboard && <Header />}
-        <main className="flex-1">{children}</main>
-      </div>
-      <Toaster />
-    </AuthProvider>
-  );
-}
-
 
 export default function RootLayout({
   children,
@@ -49,7 +29,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Suspense fallback={<div>Loading...</div>}>
-           <ClientRootLayout>{children}</ClientRootLayout>
+           <ClientLayout>{children}</ClientLayout>
         </Suspense>
       </body>
     </html>
