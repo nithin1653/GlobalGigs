@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get, child, set, query, equalTo, orderByChild } from "firebase/database";
+import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild } from "firebase/database";
 import type { Freelancer, Conversation, UserProfile } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
@@ -80,6 +80,17 @@ export async function getFreelancerById(id: string): Promise<Freelancer | undefi
     return undefined;
   }
 }
+
+export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Freelancer, 'id'>>) {
+    try {
+        const freelancerRef = ref(database, 'freelancers/' + uid);
+        await update(freelancerRef, data);
+    } catch (error) {
+        console.error("Error updating freelancer profile:", error);
+        throw error;
+    }
+}
+
 
 export async function getConversations(): Promise<Conversation[]> {
     try {

@@ -21,12 +21,11 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { handleEnhanceSkills } from '@/app/actions';
+import { handleEnhanceSkills, handleUpdateProfile } from '@/app/actions';
 import { useState, useEffect } from 'react';
 import { Wand2, Trash2, PlusCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { getFreelancerById } from '@/lib/firebase';
-import type { Freelancer } from '@/lib/mock-data';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
@@ -42,6 +41,7 @@ const profileFormSchema = z.object({
     role: z.string().min(1, {message: 'Role is required'}),
     company: z.string().min(1, {message: 'Company is required'}),
     period: z.string().min(1, {message: 'Period is required'}),
+    description: z.string().optional(),
   })),
 });
 
@@ -51,6 +51,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function ProfileForm() {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
   
@@ -80,7 +81,7 @@ export default function ProfileForm() {
             bio: freelancerData.bio,
             existingSkills: freelancerData.skills.join(', '),
             pastExperiences: pastExperiences,
-            experience: freelancerData.experience?.map(e => ({role: e.role, company: e.company, period: e.period})) || [],
+            experience: freelancerData.experience?.map(e => ({role: e.role, company: e.company, period: e.period, description: e.description})) || [],
           });
         }
       } catch (error) {
@@ -99,12 +100,35 @@ export default function ProfileForm() {
     name: 'experience',
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    console.log(data);
-    toast({
-      title: 'Profile Updated!',
-      description: 'Your changes have been saved successfully.',
-    });
+  async function onSubmit(data: ProfileFormValues) {
+    if (!user) return;
+    setIsSaving(true);
+    
+    const profileDataToSave = {
+        name: data.name,
+        role: data.role,
+        rate: data.rate,
+        location: data.location,
+        bio: data.bio,
+        skills: data.existingSkills.split(',').map(s => s.trim()).filter(Boolean),
+        experience: data.experience.map(exp => ({ ...exp, id: 0, description: exp.description || '' })), // id is a placeholder
+    };
+
+    const result = await handleUpdateProfile(user.uid, profileDataToSave);
+    setIsSaving(false);
+
+    if (result.success) {
+        toast({
+            title: 'Profile Updated!',
+            description: 'Your changes have been saved successfully.',
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Uh oh! Something went wrong.',
+            description: result.error || 'There was a problem saving your profile.',
+        });
+    }
   }
 
   async function onEnhanceSkills() {
@@ -227,7 +251,7 @@ export default function ProfileForm() {
                             <FormItem className="md:col-span-1"><FormLabel>Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (
-                            <FormItem className="md:col-span-1"><FormLabel>Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                            <FormItem className="md:col-span-1"><FormLabel>Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`experience.${index}.period`} render={({ field }) => (
                             <FormItem className="md:col-span-1"><FormLabel>Period</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
@@ -244,7 +268,10 @@ export default function ProfileForm() {
         </Card>
 
         <div className="flex justify-end">
-          <Button type="submit">Save Changes</Button>
+          <Button type="submit" disabled={isSaving}>
+            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Changes
+          </Button>
         </div>
       </form>
     </Form>
