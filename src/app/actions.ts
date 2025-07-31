@@ -82,11 +82,11 @@ export async function handleUpdateProfile(uid: string, data: Partial<Omit<Freela
 
 export async function handleUpdateUser(uid: string, data: {name: string, avatarUrl?: string}) {
     try {
-        // First, update the primary user profile, which exists for all roles.
-        await updateUserProfile(uid, data);
-        
-        // Then, check the user's role from the database.
+        // First, check the user's role from the database.
         const userProfile = await getUserProfile(uid);
+
+        // Always update the primary user profile, which exists for all roles.
+        await updateUserProfile(uid, data);
 
         // If the user is a freelancer, we also need to update their name and avatar
         // in the separate freelancer-specific profile.
