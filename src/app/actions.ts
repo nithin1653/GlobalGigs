@@ -6,8 +6,6 @@ import { updateFreelancerProfile, updateUserProfile, getUserProfile } from '@/li
 import type { Freelancer, PortfolioItem } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
-import { auth } from 'firebase-admin';
-import { getAuth } from 'firebase/auth';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
