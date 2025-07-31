@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { PlusCircle, Trash2, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { PlusCircle, Trash2, Loader2, UploadCloud } from 'lucide-react';
+import { useState, useRef, ChangeEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { uploadToCloudinary } from '@/app/actions';
 
 const portfolioFormSchema = z.object({
   portfolio: z.array(
@@ -32,15 +33,32 @@ const portfolioFormSchema = z.object({
       title: z.string().min(1, 'Title is required'),
       description: z.string().min(1, 'Description is required'),
       imageUrl: z.string().url('Must be a valid URL'),
-      file: z.any().optional(),
     })
   ),
 });
 
 type PortfolioFormValues = z.infer<typeof portfolioFormSchema>;
 
+const PortfolioItemImage = ({ control, index }: { control: any, index: number}) => {
+    const imageUrl = useWatch({
+        control,
+        name: `portfolio.${index}.imageUrl`,
+    });
+
+    const title = useWatch({
+        control,
+        name: `portfolio.${index}.title`,
+    });
+
+    return (
+         <Image src={imageUrl} alt={title || "Portfolio Item"} width={600} height={400} className="object-cover w-full h-full" />
+    )
+}
+
 export default function PortfolioForm() {
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { toast } = useToast();
 
   const form = useForm<PortfolioFormValues>({
@@ -56,16 +74,44 @@ export default function PortfolioForm() {
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: 'portfolio',
   });
 
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingIndex(index);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const result = await uploadToCloudinary(formData);
+
+    setUploadingIndex(null);
+
+    if (result.success && result.url) {
+      const currentItem = form.getValues(`portfolio.${index}`);
+      update(index, { ...currentItem, imageUrl: result.url });
+      toast({
+        title: 'Image Uploaded!',
+        description: 'Your image has been successfully uploaded to Cloudinary.',
+      });
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Upload Failed',
+        description: result.error || 'There was a problem uploading your image.',
+      });
+    }
+  };
+
   async function onSubmit(data: PortfolioFormValues) {
     setIsSaving(true);
     console.log('Submitting portfolio data:', data);
-    // Here you would typically handle the file uploads to Firebase Storage
-    // and then save the URLs to the Realtime Database.
+    // Here you would typically save the URLs to the Realtime Database.
     await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
     setIsSaving(false);
     toast({
@@ -92,8 +138,15 @@ export default function PortfolioForm() {
               >
                 <div className="md:col-span-1">
                   <FormLabel>Image</FormLabel>
-                   <div className="mt-2 aspect-video rounded-md border flex items-center justify-center overflow-hidden">
-                       <Image src={field.imageUrl} alt={field.title} width={600} height={400} className="object-cover" />
+                   <div className="mt-2 aspect-video rounded-md border flex items-center justify-center overflow-hidden bg-muted">
+                        {uploadingIndex === index ? (
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                                <p>Uploading...</p>
+                            </div>
+                        ) : (
+                           <PortfolioItemImage control={form.control} index={index} />
+                        )}
                     </div>
                 </div>
                 <div className="md:col-span-2 grid gap-4">
@@ -123,24 +176,34 @@ export default function PortfolioForm() {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name={`portfolio.${index}.file`}
-                    render={({ field }) => (
-                      <FormItem>
+
+                    <div>
                         <FormLabel>Upload New Image</FormLabel>
-                        <FormControl>
-                          <Input type="file" onChange={(e) => field.onChange(e.target.files?.[0])} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        <div className="flex gap-2 mt-2">
+                             <Input 
+                                type="file"
+                                className="hidden"
+                                ref={(el) => (fileInputRefs.current[index] = el)}
+                                onChange={(e) => handleFileChange(e, index)}
+                                accept="image/png, image/jpeg, image/gif"
+                             />
+                             <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRefs.current[index]?.click()}
+                                disabled={uploadingIndex !== null}
+                             >
+                                <UploadCloud className="mr-2"/>
+                                {uploadingIndex === index ? 'Uploading...' : 'Change Image'}
+                             </Button>
+                        </div>
+                    </div>
+                 
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="destructive"
                     size="icon"
-                    className="text-destructive hover:bg-destructive/10 justify-self-end"
+                    className="justify-self-end"
                     onClick={() => remove(index)}
                   >
                     <Trash2 className="h-4 w-4" />
@@ -159,7 +222,7 @@ export default function PortfolioForm() {
           </CardContent>
         </Card>
         <div className="flex justify-end">
-          <Button type="submit" disabled={isSaving}>
+          <Button type="submit" disabled={isSaving || uploadingIndex !== null}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Save Showcase
           </Button>
