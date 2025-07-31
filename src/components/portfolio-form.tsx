@@ -22,14 +22,17 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PlusCircle, Trash2, Loader2, UploadCloud } from 'lucide-react';
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
-import { uploadToCloudinary } from '@/app/actions';
+import { uploadToCloudinary, handleUpdatePortfolio } from '@/app/actions';
+import { getFreelancerById } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const portfolioFormSchema = z.object({
   portfolio: z.array(
     z.object({
+      id: z.number().optional(),
       title: z.string().min(1, 'Title is required'),
       description: z.string().min(1, 'Description is required'),
       imageUrl: z.string().url('Must be a valid URL'),
@@ -38,6 +41,10 @@ const portfolioFormSchema = z.object({
 });
 
 type PortfolioFormValues = z.infer<typeof portfolioFormSchema>;
+
+interface PortfolioFormProps {
+    userId: string;
+}
 
 const PortfolioItemImage = ({ control, index }: { control: any, index: number}) => {
     const imageUrl = useWatch({
@@ -55,8 +62,9 @@ const PortfolioItemImage = ({ control, index }: { control: any, index: number}) 
     )
 }
 
-export default function PortfolioForm() {
+export default function PortfolioForm({ userId }: PortfolioFormProps) {
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { toast } = useToast();
@@ -64,15 +72,36 @@ export default function PortfolioForm() {
   const form = useForm<PortfolioFormValues>({
     resolver: zodResolver(portfolioFormSchema),
     defaultValues: {
-      portfolio: [
-        {
-          title: 'Modern Website Design',
-          description: 'A sleek and responsive design for a tech startup.',
-          imageUrl: 'https://placehold.co/600x400.png',
-        },
-      ],
+      portfolio: [],
     },
   });
+
+  useEffect(() => {
+    async function loadPortfolioData() {
+        if (!userId) return;
+        setIsLoading(true);
+        try {
+            const freelancer = await getFreelancerById(userId);
+            if (freelancer?.portfolio && freelancer.portfolio.length > 0) {
+                form.reset({ portfolio: freelancer.portfolio });
+            } else {
+                form.reset({ portfolio: [
+                     {
+                        title: 'Modern Website Design',
+                        description: 'A sleek and responsive design for a tech startup.',
+                        imageUrl: 'https://placehold.co/600x400.png',
+                    },
+                ] });
+            }
+        } catch (error) {
+            console.error("Failed to fetch portfolio", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    loadPortfolioData();
+  }, [userId, form]);
+
 
   const { fields, append, remove, update } = useFieldArray({
     control: form.control,
@@ -97,7 +126,7 @@ export default function PortfolioForm() {
       update(index, { ...currentItem, imageUrl: result.url });
       toast({
         title: 'Image Uploaded!',
-        description: 'Your image has been successfully uploaded to Cloudinary.',
+        description: 'Your image has been successfully uploaded.',
       });
     } else {
       toast({
@@ -110,14 +139,35 @@ export default function PortfolioForm() {
 
   async function onSubmit(data: PortfolioFormValues) {
     setIsSaving(true);
-    console.log('Submitting portfolio data:', data);
-    // Here you would typically save the URLs to the Realtime Database.
-    await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate API call
+    const result = await handleUpdatePortfolio(userId, data.portfolio);
     setIsSaving(false);
-    toast({
-      title: 'Portfolio Updated!',
-      description: 'Your new portfolio items have been saved.',
-    });
+
+    if (result.success) {
+        toast({
+            title: 'Portfolio Updated!',
+            description: 'Your new portfolio items have been saved.',
+        });
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Save Failed',
+            description: result.error || 'There was a problem saving your portfolio.',
+        });
+    }
+  }
+  
+  if (isLoading) {
+      return (
+        <Card className="bg-background/60 backdrop-blur-xl">
+             <CardHeader>
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-64 w-full" />
+            </CardContent>
+        </Card>
+      )
   }
 
   return (

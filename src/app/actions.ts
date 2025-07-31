@@ -2,7 +2,7 @@
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
 import { updateFreelancerProfile, updateUserProfile } from '@/lib/firebase';
-import type { Freelancer } from '@/lib/mock-data';
+import type { Freelancer, PortfolioItem } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
 import { auth } from 'firebase-admin';
@@ -88,6 +88,23 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
         else {
             await updateFreelancerProfile(uid, { name: data.name });
         }
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function handleUpdatePortfolio(uid: string, portfolio: PortfolioItem[]) {
+    try {
+        // Add a hint to each portfolio item for AI image search
+        const portfolioWithHints = portfolio.map((item, index) => ({
+            ...item,
+            id: index, // Ensure there is an ID
+            hint: item.title.split(' ').slice(0, 2).join(' ').toLowerCase(),
+        }));
+        await updateFreelancerProfile(uid, { portfolio: portfolioWithHints });
         return { success: true };
     } catch (error) {
         console.error(error);
