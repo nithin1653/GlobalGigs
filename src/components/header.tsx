@@ -1,3 +1,4 @@
+
 'use client';
 import Link from 'next/link';
 import { Button } from './ui/button';
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { LayoutGrid, MessageSquare, Briefcase, LogIn, LogOut, Settings, UserPlus } from 'lucide-react';
+import { LayoutGrid, MessageSquare, Briefcase, LogIn, LogOut, Settings, UserPlus, User } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth.js';
@@ -37,12 +38,10 @@ export default function Header() {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
   };
-
-  const isFreelancerSection = pathname.startsWith('/freelancer');
   
-  const discoverPath = isFreelancerSection ? '/freelancer/jobs' : '/discover';
-  const profilePath = isFreelancerSection ? '/freelancer/profile/edit' : '/client/profile';
-
+  const discoverPath = '/discover';
+  const profilePath = '/profile/edit';
+  const messagesPath = '/messages';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/60 backdrop-blur-xl">
@@ -56,70 +55,86 @@ export default function Header() {
             href={discoverPath}
             className={cn("transition-colors hover:text-foreground/80", pathname === discoverPath ? "text-foreground" : "text-foreground/60")}
           >
-            {isFreelancerSection ? 'Find Jobs' : 'Discover'}
+           Discover
           </Link>
-          <Link
-            href="/messages"
-            className={cn("transition-colors hover:text-foreground/80", pathname === "/messages" ? "text-foreground" : "text-foreground/60")}
-          >
-            Messages
-          </Link>
-          <Link
-            href={profilePath}
-            className={cn("transition-colors hover:text-foreground/80", pathname.startsWith(profilePath) ? "text-foreground" : "text-foreground/60")}
-          >
-            My Profile
-          </Link>
+           {user && (
+             <>
+                <Link
+                  href={messagesPath}
+                  className={cn("transition-colors hover:text-foreground/80", pathname === messagesPath ? "text-foreground" : "text-foreground/60")}
+                >
+                  Messages
+                </Link>
+                <Link
+                  href={profilePath}
+                  className={cn("transition-colors hover:text-foreground/80", pathname.startsWith(profilePath) ? "text-foreground" : "text-foreground/60")}
+                >
+                  My Profile
+                </Link>
+             </>
+           )}
         </nav>
         <div className="ml-auto flex items-center gap-4">
-          <Button>{isFreelancerSection ? 'Offer Services' : 'Post a Job'}</Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user?.photoURL || "https://placehold.co/32x32.png"} alt="User Avatar" />
-                  <AvatarFallback>{user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              {loading ? <DropdownMenuLabel>Loading...</DropdownMenuLabel> : user ? (
-                <>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LayoutGrid className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log Out</span>
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                   <DropdownMenuItem asChild>
-                    <Link href="/login"><LogIn className="mr-2 h-4 w-4" /><span>Log In</span></Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/login"><UserPlus className="mr-2 h-4 w-4" /><span>Sign Up</span></Link>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            {!user && !loading && (
+                 <Button asChild variant="ghost">
+                    <Link href="/login">Log In</Link>
+                </Button>
+            )}
+             {!user && !loading && (
+                 <Button asChild>
+                    <Link href="/login">Sign Up</Link>
+                </Button>
+            )}
+        
+          {(user || loading) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.photoURL || "https://placehold.co/32x32.png"} alt="User Avatar" />
+                    <AvatarFallback>{loading ? '' : user?.email?.[0]?.toUpperCase() || <User />}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                {loading ? <DropdownMenuLabel>Loading...</DropdownMenuLabel> : user ? (
+                  <>
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push('/discover')}>
+                      <LayoutGrid className="mr-2 h-4 w-4" />
+                      <span>Dashboard</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push('/profile/edit')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log Out</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href="/login"><LogIn className="mr-2 h-4 w-4" /><span>Log In</span></Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/login"><UserPlus className="mr-2 h-4 w-4" /><span>Sign Up</span></Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </header>
