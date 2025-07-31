@@ -15,9 +15,9 @@ import Link from 'next/link';
 export default function FreelancerProfilePage({ params }: { params: { id: string } }) {
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { id } = params;
-
+  
   useEffect(() => {
+    const id = params.id;
     async function loadData() {
       if (!id) return;
       try {
@@ -35,7 +35,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
       }
     }
     loadData();
-  }, [id]);
+  }, [params.id]);
 
 
   if (isLoading) {
