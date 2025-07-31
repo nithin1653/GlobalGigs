@@ -73,21 +73,23 @@ export default function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.displayName || userProfile?.email || 'User'}</p>
+                    <p className="text-sm font-medium leading-none">{userProfile?.name || user.displayName || userProfile?.email || 'User'}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {user.email} {isFreelancer ? '(Freelancer View)' : '(Client View)'}
+                      {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {isFreelancer && (
+                {isFreelancer ? (
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /><span>Dashboard</span></Link>
                     </DropdownMenuItem>
+                ): (
+                   <DropdownMenuItem asChild>
+                     <Link href="/dashboard/profile"><User className="mr-2 h-4 w-4" /><span>Manage Profile</span></Link>
+                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem asChild>
-                  <Link href="/profile/edit"><User className="mr-2 h-4 w-4" /><span>Manage Profile</span></Link>
-                </DropdownMenuItem>
+                
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log Out</span>

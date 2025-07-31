@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ProfileForm from '@/components/profile-form';
 import UserProfileForm from '@/components/user-profile-form';
 import { Button } from '@/components/ui/button';
@@ -15,15 +15,17 @@ type ActiveTab = 'public' | 'account';
 
 export default function EditProfilePage() {
     const { userProfile, loading } = useAuth();
-    const [activeTab, setActiveTab] = useState<ActiveTab>('public');
+    const [activeTab, setActiveTab] = useState<ActiveTab>('account');
+
+    // This useEffect hook ensures that freelancers default to the 'public' tab
+    // once their profile has loaded.
+    useEffect(() => {
+        if (userProfile?.role === 'freelancer') {
+            setActiveTab('public');
+        }
+    }, [userProfile]);
 
     const isFreelancer = userProfile?.role === 'freelancer';
-
-    // If a client is viewing, default to account settings.
-    // This check is mostly for robustness, as clients shouldn't reach this page.
-    if (!isFreelancer && activeTab === 'public') {
-        setActiveTab('account');
-    }
 
     if (loading) {
         return (
