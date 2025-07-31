@@ -1,3 +1,4 @@
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -93,40 +94,57 @@ export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Fr
 
 export async function findOrCreateConversation(clientUserId: string, freelancerUserId: string): Promise<Conversation> {
   const conversationsRef = ref(database, 'conversations');
+  // A more efficient way to query would be to use a composite key, but for RTDB's structure, querying one and filtering is a common pattern.
   const q = query(conversationsRef, orderByChild('clientUserId'), equalTo(clientUserId));
   const snapshot = await get(q);
 
   let existingConversation: Conversation | null = null;
   if (snapshot.exists()) {
     const convs = snapshot.val();
+    // Find the specific conversation with the target freelancer
     const convId = Object.keys(convs).find(key => convs[key].freelancerUserId === freelancerUserId);
     if (convId) {
-      existingConversation = { ...convs[convId], id: convId };
+      const convData = convs[convId];
+       // Ensure participant data is up-to-date
+      const freelancerProfile = await getFreelancerById(freelancerUserId);
+      if(freelancerProfile) {
+        convData.participant = {
+            id: freelancerProfile.id,
+            name: freelancerProfile.name,
+            avatarUrl: freelancerProfile.avatarUrl,
+            role: freelancerProfile.role,
+        };
+      }
+      existingConversation = { ...convData, id: convId };
     }
   }
 
   if (existingConversation) {
     return existingConversation;
   } else {
+    // No existing conversation, so create a new one.
     const freelancerData = await getFreelancerById(freelancerUserId);
     if (!freelancerData) throw new Error("Freelancer not found");
 
     const newConversationRef = push(conversationsRef);
-    const newConversation: Omit<Conversation, 'id'> = {
+    const newConversationData: Omit<Conversation, 'id'> = {
       clientUserId: clientUserId,
       freelancerUserId: freelancerUserId,
-      participant: {
-        id: freelancerData.id,
-        name: freelancerData.name,
-        avatarUrl: freelancerData.avatarUrl,
-        role: freelancerData.role
-      },
-      messages: [],
-      lastMessage: "Conversation started.",
-      lastMessageTimestamp: new Date().toISOString()
+      messages: [], // Start with no messages
+      lastMessage: "Conversation started",
+      lastMessageTimestamp: serverTimestamp(),
+      // The participant should be the other person in the chat
+      participant: { // This will be dynamically set on the client, but we can set a default
+         id: freelancerData.id,
+         name: freelancerData.name,
+         avatarUrl: freelancerData.avatarUrl,
+         role: freelancerData.role,
+      }
     };
-    await set(newConversationRef, newConversation);
-    return { ...newConversation, id: newConversationRef.key! };
+    await set(newConversationRef, newConversationData);
+
+    const createdConversation = await get(newConversationRef);
+    return { ...createdConversation.val(), id: newConversationRef.key! };
   }
 }
 
@@ -141,23 +159,28 @@ export async function getConversationsForUser(userId: string, userRole: 'client'
       const data = snapshot.val();
       const conversations = await Promise.all(Object.keys(data).map(async key => {
         const conv = data[key];
+        // Determine the ID of the other participant
         const otherUserId = userRole === 'client' ? conv.freelancerUserId : conv.clientUserId;
-        // In a real app, you'd fetch the other user's profile info here
-        // For now, we'll use the participant data stored on the conversation
-        const otherUser = await getFreelancerById(otherUserId) || { name: 'User', role: 'Client', avatarUrl: '' };
-
+        
+        // Fetch the other participant's profile for up-to-date info
+        // Note: In a real app, you might have a single 'users' node to simplify this.
+        const otherUser = userRole === 'client' 
+            ? await getFreelancerById(otherUserId) 
+            : await getUserProfile(otherUserId);
+            
         return { 
             ...conv, 
             id: key, 
-            participant: { // ensure participant is correct for the current user
-                id: otherUser.id,
-                name: otherUser.name,
-                avatarUrl: otherUser.avatarUrl,
-                role: otherUser.role
+            participant: { // ensure participant is the OTHER person in the chat
+                id: otherUserId,
+                name: otherUser?.name || otherUser?.email || 'User',
+                avatarUrl: otherUser?.avatarUrl || '',
+                role: otherUser?.role || 'User'
             }
         };
       }));
-      return conversations;
+      // Sort conversations by last message timestamp, newest first
+      return conversations.sort((a, b) => new Date(b.lastMessageTimestamp).getTime() - new Date(a.lastMessageTimestamp).getTime());
     }
     return [];
   } catch (error) {
@@ -183,7 +206,7 @@ export async function sendMessage(conversationId: string, message: Message) {
 }
 
 export function subscribeToConversation(conversationId: string, callback: (messages: Message[]) => void) {
-    const messagesRef = ref(database, `conversations/${conversationId}/messages`);
+    const messagesRef = query(ref(database, `conversations/${conversationId}/messages`), orderByChild('timestamp'));
     return onValue(messagesRef, (snapshot) => {
         const messages: Message[] = [];
         if (snapshot.exists()) {

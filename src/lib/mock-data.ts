@@ -1,3 +1,4 @@
+
 export interface PortfolioItem {
   id: number;
   title: string;
@@ -15,7 +16,7 @@ export interface Experience {
 }
 
 export interface Freelancer {
-  id: string;
+  id:string;
   name: string;
   role: string;
   category: string;
@@ -33,7 +34,7 @@ export interface Message {
   id: string;
   senderId: string;
   text: string;
-  timestamp: Date | string; // Allow string to match Firebase Timestamps
+  timestamp: Date | string | object; // Allow object for serverTimestamp
 }
 
 export interface Conversation {
@@ -48,11 +49,14 @@ export interface Conversation {
   };
   messages: Message[];
   lastMessage: string;
-  lastMessageTimestamp: Date | string; // Allow string to match Firebase Timestamps
+  lastMessageTimestamp: Date | string | object; // Allow object for serverTimestamp
 }
 
 export interface UserProfile {
+  id: string;
   email: string;
   role: 'client' | 'freelancer';
   createdAt: string;
+  name?: string;
+  avatarUrl?: string;
 }

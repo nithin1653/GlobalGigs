@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Conversation, Message, UserProfile } from '@/lib/mock-data';
-import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile, getFreelancerById } from '@/lib/firebase';
+import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { Send, Search, Loader2, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth.js';
-import { Unsubscribe } from 'firebase/database';
+import type { Unsubscribe } from 'firebase/database';
 
 export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -22,85 +22,102 @@ export default function ChatInterface() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-
-  const { user } = useAuth();
+  
+  const { user, userProfile } = useAuth();
   const searchParams = useSearchParams();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  let unsubscribe: Unsubscribe | null = null;
+  const conversationSubscription = useRef<Unsubscribe | null>(null);
   
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
-        scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight });
+        const scrollableNode = scrollAreaRef.current.children[0]?.children[0];
+        if (scrollableNode) {
+            scrollableNode.scrollTo({ top: scrollableNode.scrollHeight, behavior: 'smooth' });
+        }
     }
-  };
+  }, []);
 
-  const handleSetActiveConversation = (conv: Conversation | null) => {
-    if (unsubscribe) {
-        unsubscribe();
-        unsubscribe = null;
+  const selectConversation = useCallback((conv: Conversation | null) => {
+    if (conversationSubscription.current) {
+        conversationSubscription.current();
+        conversationSubscription.current = null;
     }
     setActiveConversation(conv);
     if (conv) {
-        unsubscribe = subscribeToConversation(conv.id, (newMessages) => {
+        setIsLoading(true);
+        conversationSubscription.current = subscribeToConversation(conv.id, (newMessages) => {
             setMessages(newMessages);
+            setIsLoading(false);
+            setTimeout(scrollToBottom, 100); 
         });
+    } else {
+        setMessages([]);
     }
-  };
-
+  }, [scrollToBottom]);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadInitialData() {
-      if (!user) {
+      if (!user || !userProfile) {
         setIsLoading(false);
         return;
       }
       
       setIsLoading(true);
       try {
-        const profile = await getUserProfile(user.uid);
-        if (!profile) throw new Error("User profile not found");
-        setUserProfile(profile);
-
-        const convs = await getConversationsForUser(user.uid, profile.role);
-        setConversations(convs);
+        const convs = await getConversationsForUser(user.uid, userProfile.role);
+        if (!isMounted) return;
 
         const freelancerId = searchParams.get('freelancerId');
-        if (freelancerId && profile.role === 'client') {
+
+        if (freelancerId && userProfile.role === 'client') {
             const conversation = await findOrCreateConversation(user.uid, freelancerId);
-            if (!convs.find(c => c.id === conversation.id)) {
-                setConversations(prev => [...prev, conversation]);
+             if (!isMounted) return;
+            // Check if conversation already in list, if not, add it
+            const existingConv = convs.find(c => c.id === conversation.id);
+            if (!existingConv) {
+                setConversations([conversation, ...convs]);
+                selectConversation(conversation);
+            } else {
+                // If it exists, move it to the top and select it
+                const otherConvs = convs.filter(c => c.id !== conversation.id);
+                setConversations([existingConv, ...otherConvs]);
+                selectConversation(existingConv);
             }
-            handleSetActiveConversation(conversation);
         } else if (convs.length > 0) {
-            handleSetActiveConversation(convs[0]);
+            setConversations(convs);
+            selectConversation(convs[0]);
+        } else {
+            setConversations([]);
         }
       } catch (error) {
         console.error("Failed to fetch conversations", error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+            setIsLoading(false);
+        }
       }
     }
     loadInitialData();
 
     return () => {
-        if (unsubscribe) {
-            unsubscribe();
+        isMounted = false;
+        if (conversationSubscription.current) {
+            conversationSubscription.current();
         }
     }
-  }, [user, searchParams]);
+  }, [user, userProfile, searchParams, selectConversation]);
   
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversation || !user) return;
 
     setIsSending(true);
-    const message: Message = {
-      id: '', // will be set by firebase
+    const message: Omit<Message, 'id'> = {
       senderId: user.uid,
       text: newMessage,
       timestamp: new Date(),
@@ -113,11 +130,10 @@ export default function ChatInterface() {
         console.error("Error sending message", error);
     } finally {
         setIsSending(false);
-        setTimeout(scrollToBottom, 100);
     }
   };
   
-  if (isLoading) {
+  if (isLoading && conversations.length === 0) {
     return (
       <div className="flex h-full border-t bg-background/60 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
@@ -144,14 +160,14 @@ export default function ChatInterface() {
           {conversations.map((conv) => (
             <button
               key={conv.id}
-              onClick={() => handleSetActiveConversation(conv)}
+              onClick={() => selectConversation(conv)}
               className={cn(
                 'flex items-center gap-4 p-4 w-full text-left transition-colors hover:bg-muted/50',
                 activeConversation?.id === conv.id && 'bg-muted'
               )}
             >
               <Avatar>
-                <AvatarImage src={conv.participant.avatarUrl} />
+                <AvatarImage src={conv.participant.avatarUrl} alt={conv.participant.name}/>
                 <AvatarFallback>{conv.participant.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 overflow-hidden">
@@ -165,6 +181,11 @@ export default function ChatInterface() {
               </div>
             </button>
           ))}
+           {conversations.length === 0 && !isLoading && (
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              No conversations yet.
+            </div>
+          )}
         </ScrollArea>
       </div>
 
@@ -176,7 +197,7 @@ export default function ChatInterface() {
         {activeConversation ? (
           <>
             <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => handleSetActiveConversation(null)}>
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => selectConversation(null)}>
                     <ArrowLeft />
                 </Button>
               <Avatar>
@@ -213,6 +234,11 @@ export default function ChatInterface() {
                     </div>
                   </div>
                 ))}
+                 {isLoading && messages.length > 0 && (
+                    <div className="flex justify-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                 )}
               </div>
             </ScrollArea>
 
@@ -232,8 +258,12 @@ export default function ChatInterface() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <p>Select a conversation to start chatting</p>
+          <div className="flex-1 flex items-center justify-center text-center text-muted-foreground">
+              <div className="flex flex-col items-center gap-2">
+                <MessageSquare className="h-12 w-12" />
+                <h3 className="text-lg font-semibold">Welcome to your Inbox</h3>
+                <p>Select a conversation to start chatting</p>
+            </div>
           </div>
         )}
       </div>
