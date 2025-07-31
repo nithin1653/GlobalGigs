@@ -113,8 +113,9 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
     }
 }
 
-interface PortfolioFormData extends Omit<PortfolioItem, 'technologiesUsed'> {
+interface PortfolioFormData extends Omit<PortfolioItem, 'technologiesUsed' | 'imageUrls'> {
     technologiesUsed?: string;
+    imageUrls: string[];
 }
 
 export async function handleUpdatePortfolio(uid: string, portfolio: PortfolioFormData[]) {

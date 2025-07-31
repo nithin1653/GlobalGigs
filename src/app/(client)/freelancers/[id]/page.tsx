@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe, MessageSquare, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export default function FreelancerProfilePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
@@ -133,16 +134,26 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
                         {freelancer.portfolio.map(item => (
                             <div key={item.id} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                                 <div className="md:col-span-1">
-                                    <div className="aspect-video rounded-lg overflow-hidden border">
-                                         <Image
-                                            src={item.imageUrl}
-                                            alt={item.title}
-                                            width={600}
-                                            height={400}
-                                            className="object-cover w-full h-full"
-                                            data-ai-hint={item.hint}
-                                        />
-                                    </div>
+                                    <Carousel className="w-full max-w-xs mx-auto">
+                                      <CarouselContent>
+                                        {(item.imageUrls || []).map((url, index) => (
+                                          <CarouselItem key={index}>
+                                            <div className="aspect-video rounded-lg overflow-hidden border">
+                                              <Image
+                                                  src={url}
+                                                  alt={`${item.title} - Image ${index + 1}`}
+                                                  width={600}
+                                                  height={400}
+                                                  className="object-cover w-full h-full"
+                                                  data-ai-hint={item.hint}
+                                              />
+                                            </div>
+                                          </CarouselItem>
+                                        ))}
+                                      </CarouselContent>
+                                      <CarouselPrevious />
+                                      <CarouselNext />
+                                    </Carousel>
                                 </div>
                                 <div className="md:col-span-2">
                                      <h4 className="font-bold text-lg">{item.title}</h4>

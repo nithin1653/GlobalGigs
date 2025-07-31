@@ -32,7 +32,7 @@ export default function FreelancerLayout({
               <span className="">GlobalGigs Freelancer</span>
             </Link>
           </div>
-          <ScrollArea className="flex-1">
+          <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navItems.map((item) => (
                 <Link
@@ -48,13 +48,15 @@ export default function FreelancerLayout({
                 </Link>
               ))}
             </nav>
-          </ScrollArea>
+          </div>
         </div>
       </div>
       <div className="flex flex-col">
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
-            {children}
-        </main>
+        <ScrollArea className="h-screen">
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+              {children}
+          </main>
+        </ScrollArea>
       </div>
     </div>
   );

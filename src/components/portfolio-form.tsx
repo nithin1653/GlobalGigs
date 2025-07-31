@@ -28,6 +28,8 @@ import Image from 'next/image';
 import { uploadToCloudinary, handleUpdatePortfolio } from '@/app/actions';
 import { getFreelancerById } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+
 
 const portfolioFormSchema = z.object({
   portfolio: z.array(
@@ -35,7 +37,7 @@ const portfolioFormSchema = z.object({
       id: z.number().optional(),
       title: z.string().min(1, 'Title is required'),
       description: z.string().min(1, 'Description is required'),
-      imageUrl: z.string().url('Must be a valid URL'),
+      imageUrls: z.array(z.string().url()).min(1, 'At least one image is required'),
       technologiesUsed: z.string().optional(),
     })
   ),
@@ -47,19 +49,39 @@ interface PortfolioFormProps {
     userId: string;
 }
 
-const PortfolioItemImage = ({ control, index }: { control: any, index: number}) => {
-    const imageUrl = useWatch({
+const PortfolioItemImages = ({ control, index }: { control: any, index: number}) => {
+    const imageUrls = useWatch({
         control,
-        name: `portfolio.${index}.imageUrl`,
+        name: `portfolio.${index}.imageUrls`,
+        defaultValue: []
     });
 
     const title = useWatch({
         control,
         name: `portfolio.${index}.title`,
     });
+    
+    if (!imageUrls || imageUrls.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <UploadCloud className="h-8 w-8" />
+                <p className="text-sm mt-2">No images uploaded</p>
+            </div>
+        )
+    }
 
     return (
-         <Image src={imageUrl} alt={title || "Portfolio Item"} width={600} height={400} className="object-cover w-full h-full" />
+        <Carousel className="w-full max-w-xs mx-auto">
+            <CarouselContent>
+                {imageUrls.map((url: string, imgIndex: number) => (
+                    <CarouselItem key={imgIndex}>
+                        <Image src={url} alt={`${title || 'Portfolio Item'} - ${imgIndex + 1}`} width={600} height={400} className="object-cover w-full h-full rounded-md" />
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+        </Carousel>
     )
 }
 
@@ -86,6 +108,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
             if (freelancer?.portfolio && freelancer.portfolio.length > 0) {
                 const portfolioWithTechString = freelancer.portfolio.map(item => ({
                     ...item,
+                    imageUrls: item.imageUrls || [],
                     technologiesUsed: item.technologiesUsed?.join(', ') || '',
                 }));
                 form.reset({ portfolio: portfolioWithTechString });
@@ -94,7 +117,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                      {
                         title: 'Modern Website Design',
                         description: 'A sleek and responsive design for a tech startup.',
-                        imageUrl: 'https://placehold.co/600x400.png',
+                        imageUrls: ['https://placehold.co/600x400.png'],
                         technologiesUsed: 'React, Next.js, TailwindCSS',
                     },
                 ] });
@@ -115,32 +138,41 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
   });
 
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
 
     setUploadingIndex(index);
-
-    const formData = new FormData();
-    formData.append('file', file);
     
-    const result = await uploadToCloudinary(formData);
+    const currentItem = form.getValues(`portfolio.${index}`);
+    const existingImageUrls = currentItem.imageUrls || [];
+
+    const uploadedUrls: string[] = [];
+
+    for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const result = await uploadToCloudinary(formData);
+
+        if (result.success && result.url) {
+            uploadedUrls.push(result.url);
+        } else {
+             toast({
+                variant: 'destructive',
+                title: `Upload Failed for ${file.name}`,
+                description: result.error || 'There was a problem uploading an image.',
+            });
+        }
+    }
+
+    if (uploadedUrls.length > 0) {
+        update(index, { ...currentItem, imageUrls: [...existingImageUrls, ...uploadedUrls] });
+        toast({
+            title: 'Images Uploaded!',
+            description: `${uploadedUrls.length} image(s) have been successfully uploaded.`,
+        });
+    }
 
     setUploadingIndex(null);
-
-    if (result.success && result.url) {
-      const currentItem = form.getValues(`portfolio.${index}`);
-      update(index, { ...currentItem, imageUrl: result.url });
-      toast({
-        title: 'Image Uploaded!',
-        description: 'Your image has been successfully uploaded.',
-      });
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Upload Failed',
-        description: result.error || 'There was a problem uploading your image.',
-      });
-    }
   };
 
   async function onSubmit(data: PortfolioFormValues) {
@@ -193,7 +225,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                 className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start mb-6 p-4 border rounded-lg"
               >
                 <div className="md:col-span-1">
-                  <FormLabel>Image</FormLabel>
+                  <FormLabel>Images</FormLabel>
                    <div className="mt-2 aspect-video rounded-md border flex items-center justify-center overflow-hidden bg-muted">
                         {uploadingIndex === index ? (
                             <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -201,7 +233,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                                 <p>Uploading...</p>
                             </div>
                         ) : (
-                           <PortfolioItemImage control={form.control} index={index} />
+                           <PortfolioItemImages control={form.control} index={index} />
                         )}
                     </div>
                 </div>
@@ -248,7 +280,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                   
                   <div className="flex justify-between items-center">
                     <div>
-                        <FormLabel>Upload New Image</FormLabel>
+                        <FormLabel>Upload New Images</FormLabel>
                         <div className="flex gap-2 mt-2">
                              <Input 
                                 type="file"
@@ -256,6 +288,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                                 ref={(el) => (fileInputRefs.current[index] = el)}
                                 onChange={(e) => handleFileChange(e, index)}
                                 accept="image/png, image/jpeg, image/gif"
+                                multiple
                              />
                              <Button
                                 type="button"
@@ -264,7 +297,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                                 disabled={uploadingIndex !== null}
                              >
                                 <UploadCloud className="mr-2"/>
-                                {uploadingIndex === index ? 'Uploading...' : 'Change Image'}
+                                {uploadingIndex === index ? 'Uploading...' : 'Add Images'}
                              </Button>
                         </div>
                     </div>
@@ -286,7 +319,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ title: '', description: '', imageUrl: 'https://placehold.co/600x400.png', technologiesUsed: '' })}
+              onClick={() => append({ title: '', description: '', imageUrls: [], technologiesUsed: '' })}
             >
               <PlusCircle className="mr-2 h-4 w-4" /> Add Portfolio Item
             </Button>
