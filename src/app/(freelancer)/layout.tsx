@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/profile/edit', icon: User, label: 'My Profile' },
+    { href: '/dashboard/profile', icon: User, label: 'My Profile' },
     { href: '/dashboard/tasks', icon: ListTodo, label: 'Active Gigs' },
     { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
     { href: '/dashboard/talent', icon: Gem, label: 'Talent Showcase' },

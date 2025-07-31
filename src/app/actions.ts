@@ -1,3 +1,4 @@
+
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
@@ -81,13 +82,14 @@ export async function handleUpdateProfile(uid: string, data: Partial<Omit<Freela
 
 export async function handleUpdateUser(uid: string, data: {name: string, avatarUrl?: string}) {
     try {
-        // First, update the primary user profile.
+        // First, update the primary user profile, which exists for all roles.
         await updateUserProfile(uid, data);
         
-        // Then, check the user's role.
+        // Then, check the user's role from the database.
         const userProfile = await getUserProfile(uid);
 
-        // Only update the freelancer-specific profile if the user is a freelancer.
+        // If the user is a freelancer, we also need to update their name and avatar
+        // in the separate freelancer-specific profile.
         if (userProfile?.role === 'freelancer') {
             const freelancerUpdateData: Partial<Freelancer> = { name: data.name };
             if (data.avatarUrl) {
