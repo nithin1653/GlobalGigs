@@ -54,7 +54,7 @@ export default function LoginPage() {
   const handleRedirect = async (user: User) => {
     const userProfile = await getUserProfile(user.uid);
     if (userProfile?.role === 'freelancer') {
-      router.push('/profile/edit');
+      router.push('/dashboard');
     } else {
       router.push('/discover');
     }
