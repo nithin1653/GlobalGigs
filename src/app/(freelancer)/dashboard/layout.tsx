@@ -10,7 +10,7 @@ const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/profile', icon: User, label: 'Manage Profile' },
     { href: '/dashboard/tasks', icon: ListTodo, label: 'Active Gigs' },
-    { href: '/messages', icon: MessageSquare, label: 'Messages' },
+    { href: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
     { href: '/dashboard/talent', icon: Gem, label: 'Talent Showcase' },
     { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];
