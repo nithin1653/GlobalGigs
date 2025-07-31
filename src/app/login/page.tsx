@@ -1,3 +1,4 @@
+
 'use client';
 import { Button } from "@/components/ui/button";
 import {
@@ -11,9 +12,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Briefcase, Loader2 } from "lucide-react";
+import { Briefcase, Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -23,21 +24,49 @@ import {
 import { auth, createUserProfile } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import PasswordStrength from "@/components/password-strength";
 
 type UserRole = 'client' | 'freelancer';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<UserRole>('client');
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const { toast } = useToast();
   const router = useRouter();
+
+  const passwordStrength = useMemo(() => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.match(/[a-z]/)) strength++;
+    if (password.match(/[A-Z]/)) strength++;
+    if (password.match(/[0-9]/)) strength++;
+    if (password.match(/[^a-zA-Z0-9]/)) strength++;
+    return strength;
+  }, [password]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (isSigningUp) {
+      if (password !== confirmPassword) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Passwords do not match.' });
+        setIsLoading(false);
+        return;
+      }
+      if (passwordStrength < 4) {
+          toast({ variant: 'destructive', title: 'Error', description: 'Password is not strong enough.' });
+          setIsLoading(false);
+          return;
+      }
+    }
+
     try {
       if (isSigningUp) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -60,6 +89,8 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
+    // Note: We'd need a separate step to ask for role after Google sign-up.
+    // For now, it will not have a role assigned in the database.
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
       toast({ title: 'Success', description: 'Logged in successfully! Redirecting...' });
@@ -70,6 +101,8 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -109,8 +142,27 @@ export default function LoginPage() {
                   Forgot your password?
                 </Link>}
               </div>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <div className="relative">
+                <Input id="password" type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 right-0 px-3 flex items-center text-muted-foreground">
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
+             {isSigningUp && (
+               <>
+                <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <div className="relative">
+                        <Input id="confirm-password" type={showPassword ? 'text' : 'password'} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                        <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 right-0 px-3 flex items-center text-muted-foreground">
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        </button>
+                    </div>
+                </div>
+                <PasswordStrength password={password} strength={passwordStrength} />
+               </>
+             )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isSigningUp ? 'Sign Up' : 'Log In'}
