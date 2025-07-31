@@ -11,24 +11,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { LayoutGrid, MessageSquare, Briefcase, LogIn, LogOut, Settings, UserPlus, User } from 'lucide-react';
-import { usePathname, useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { Briefcase, LogIn, LogOut, User, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth.js';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
+// This is the public-facing header for logged-out users.
 export default function Header() {
-  const pathname = usePathname();
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
-  const isAuthPage = pathname === '/login';
   
-  // Don't render header on login page
-  if (isAuthPage) {
-    return null;
-  }
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -38,10 +31,6 @@ export default function Header() {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
     }
   };
-  
-  const discoverPath = '/discover';
-  const profilePath = '/profile/edit';
-  const messagesPath = '/messages';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/60 backdrop-blur-xl">
@@ -50,30 +39,6 @@ export default function Header() {
           <Briefcase className="h-6 w-6 text-primary" />
           <span className="hidden font-bold sm:inline-block font-headline text-lg">GlobalGigs</span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
-          <Link
-            href={discoverPath}
-            className={cn("transition-colors hover:text-foreground/80", pathname === discoverPath ? "text-foreground" : "text-foreground/60")}
-          >
-           Discover
-          </Link>
-           {user && (
-             <>
-                <Link
-                  href={messagesPath}
-                  className={cn("transition-colors hover:text-foreground/80", pathname === messagesPath ? "text-foreground" : "text-foreground/60")}
-                >
-                  Messages
-                </Link>
-                <Link
-                  href={profilePath}
-                  className={cn("transition-colors hover:text-foreground/80", pathname.startsWith(profilePath) ? "text-foreground" : "text-foreground/60")}
-                >
-                  My Profile
-                </Link>
-             </>
-           )}
-        </nav>
         <div className="ml-auto flex items-center gap-4">
             {!user && !loading && (
                  <Button asChild variant="ghost">
@@ -107,15 +72,6 @@ export default function Header() {
                         </p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push('/discover')}>
-                      <LayoutGrid className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/profile/edit')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />

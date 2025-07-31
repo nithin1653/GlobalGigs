@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckCircle, Briefcase, Users, Search, DollarSign, PenTool } from 'lucide-react';
-import Image from 'next/image';
 
 const clientFeatures = [
   {
@@ -77,10 +76,10 @@ export default function HomePage() {
             </p>
             <div className="flex justify-center gap-4">
               <Button asChild size="lg">
-                <Link href="/discover">Find Talent</Link>
+                <Link href="/login">Hire a Freelancer</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/profile/edit">Become a Freelancer</Link>
+                <Link href="/login">Become a Freelancer</Link>
               </Button>
             </div>
           </div>
