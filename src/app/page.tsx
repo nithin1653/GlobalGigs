@@ -62,7 +62,7 @@ export default function HomePage() {
                 <Link href="/discover">Find Talent</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/profile/edit">Become a Freelancer</Link>
+                <Link href="/freelancer/profile/edit">Become a Freelancer</Link>
               </Button>
             </div>
           </div>

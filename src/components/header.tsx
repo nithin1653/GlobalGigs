@@ -38,6 +38,12 @@ export default function Header() {
     }
   };
 
+  const isFreelancerSection = pathname.startsWith('/freelancer');
+  
+  const discoverPath = isFreelancerSection ? '/freelancer/jobs' : '/discover';
+  const profilePath = isFreelancerSection ? '/freelancer/profile/edit' : '/client/profile';
+
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/60 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center px-4">
@@ -47,10 +53,10 @@ export default function Header() {
         </Link>
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           <Link
-            href="/discover"
-            className={cn("transition-colors hover:text-foreground/80", pathname === "/discover" ? "text-foreground" : "text-foreground/60")}
+            href={discoverPath}
+            className={cn("transition-colors hover:text-foreground/80", pathname === discoverPath ? "text-foreground" : "text-foreground/60")}
           >
-            Discover
+            {isFreelancerSection ? 'Find Jobs' : 'Discover'}
           </Link>
           <Link
             href="/messages"
@@ -59,14 +65,14 @@ export default function Header() {
             Messages
           </Link>
           <Link
-            href="/profile/edit"
-            className={cn("transition-colors hover:text-foreground/80", pathname === "/profile/edit" ? "text-foreground" : "text-foreground/60")}
+            href={profilePath}
+            className={cn("transition-colors hover:text-foreground/80", pathname.startsWith(profilePath) ? "text-foreground" : "text-foreground/60")}
           >
             My Profile
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
-          <Button>Post a Job</Button>
+          <Button>{isFreelancerSection ? 'Offer Services' : 'Post a Job'}</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
