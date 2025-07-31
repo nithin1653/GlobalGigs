@@ -22,8 +22,13 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { handleEnhanceSkills } from '@/app/actions';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Wand2, Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { getFreelancerById } from '@/lib/firebase';
+import type { Freelancer } from '@/lib/mock-data';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -42,30 +47,52 @@ const profileFormSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
-const defaultValues: Partial<ProfileFormValues> = {
-  name: 'Priya Sharma',
-  role: 'Senior UX/UI Designer',
-  rate: 65,
-  location: 'Mumbai, India',
-  bio: 'A passionate UX/UI designer with over 8 years of experience creating intuitive and beautiful digital experiences. I specialize in user-centered design methodologies to solve complex problems.',
-  existingSkills: 'Figma, Sketch, Adobe XD, User Research, Prototyping',
-  pastExperiences: `Led the design team for a leading e-commerce platform, mentored junior designers, and established a new design system at Digital Solutions Inc. (2019 - Present). 
-Worked on various client projects, from mobile apps to large-scale web applications at Creative Minds Studio (2016 - 2019).`,
-  experience: [
-    { role: 'Lead UX Designer', company: 'Digital Solutions Inc.', period: '2019 - Present' },
-    { role: 'UI/UX Designer', company: 'Creative Minds Studio', period: '2016 - 2019' },
-  ]
-};
 
 export default function ProfileForm() {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues,
+    defaultValues: {},
     mode: 'onChange',
   });
+  
+  useEffect(() => {
+    async function loadFreelancerData() {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      };
+
+      try {
+        const freelancerData = await getFreelancerById(user.uid);
+        if (freelancerData) {
+          const pastExperiences = freelancerData.experience?.map(e => `${e.role} at ${e.company} (${e.period}): ${e.description}`).join('\n\n') || '';
+          
+          form.reset({
+            name: freelancerData.name,
+            role: freelancerData.role,
+            rate: freelancerData.rate,
+            location: freelancerData.location,
+            bio: freelancerData.bio,
+            existingSkills: freelancerData.skills.join(', '),
+            pastExperiences: pastExperiences,
+            experience: freelancerData.experience?.map(e => ({role: e.role, company: e.company, period: e.period})) || [],
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch freelancer data", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not load your profile data."});
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadFreelancerData();
+  }, [user, form, toast]);
+
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -73,6 +100,7 @@ export default function ProfileForm() {
   });
 
   function onSubmit(data: ProfileFormValues) {
+    console.log(data);
     toast({
       title: 'Profile Updated!',
       description: 'Your changes have been saved successfully.',
@@ -104,6 +132,39 @@ export default function ProfileForm() {
             description: result.error || 'There was a problem with the AI suggestion.',
         });
     }
+  }
+  
+  if (isLoading) {
+      return (
+          <div className="space-y-8">
+              <Card className="bg-background/60 backdrop-blur-xl">
+                  <CardHeader>
+                      <Skeleton className="h-8 w-48" />
+                      <Skeleton className="h-4 w-64" />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                          <Skeleton className="h-10 w-full" />
+                      </div>
+                      <Skeleton className="h-24 w-full" />
+                  </CardContent>
+              </Card>
+              <Card className="bg-background/60 backdrop-blur-xl">
+                   <CardHeader>
+                        <Skeleton className="h-8 w-64" />
+                        <Skeleton className="h-4 w-72" />
+                    </CardHeader>
+                   <CardContent className="space-y-4">
+                       <Skeleton className="h-24 w-full" />
+                       <Skeleton className="h-10 w-full" />
+                       <Skeleton className="h-10 w-48" />
+                   </CardContent>
+              </Card>
+          </div>
+      )
   }
 
   return (
