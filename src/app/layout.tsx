@@ -7,6 +7,9 @@ import { AuthProvider } from '@/hooks/use-auth.js';
 export const metadata: Metadata = {
   title: 'GlobalGigs',
   description: 'A talent marketplace for freelancers and clients.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
