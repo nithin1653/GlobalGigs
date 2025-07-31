@@ -59,7 +59,7 @@ export default function ChatInterface() {
     let isMounted = true;
     async function loadInitialData() {
       if (!user || !userProfile) {
-        setIsLoading(false);
+        // Keep loading until user profile is available
         return;
       }
       
@@ -67,6 +67,7 @@ export default function ChatInterface() {
       try {
         const convs = await getConversationsForUser(user.uid, userProfile.role);
         if (!isMounted) return;
+        setConversations(convs);
 
         const freelancerId = searchParams.get('freelancerId');
 
@@ -74,21 +75,21 @@ export default function ChatInterface() {
             const conversation = await findOrCreateConversation(user.uid, freelancerId);
              if (!isMounted) return;
             // Check if conversation already in list, if not, add it
-            const existingConv = convs.find(c => c.id === conversation.id);
-            if (!existingConv) {
-                setConversations([conversation, ...convs]);
+            const existingConvIndex = convs.findIndex(c => c.id === conversation.id);
+            if (existingConvIndex === -1) {
+                const updatedConvs = [conversation, ...convs];
+                setConversations(updatedConvs);
                 selectConversation(conversation);
             } else {
                 // If it exists, move it to the top and select it
+                const existingConv = convs[existingConvIndex];
                 const otherConvs = convs.filter(c => c.id !== conversation.id);
-                setConversations([existingConv, ...otherConvs]);
+                const updatedConvs = [existingConv, ...otherConvs];
+                setConversations(updatedConvs);
                 selectConversation(existingConv);
             }
         } else if (convs.length > 0) {
-            setConversations(convs);
             selectConversation(convs[0]);
-        } else {
-            setConversations([]);
         }
       } catch (error) {
         console.error("Failed to fetch conversations", error);
@@ -174,7 +175,7 @@ export default function ChatInterface() {
                 <div className="flex justify-between items-center">
                     <p className="font-semibold truncate">{conv.participant.name}</p>
                     {conv.lastMessageTimestamp && <p className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDistanceToNow(new Date(conv.lastMessageTimestamp), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(conv.lastMessageTimestamp as string), { addSuffix: true })}
                     </p>}
                 </div>
                 <p className="text-sm text-muted-foreground truncate">{conv.lastMessage}</p>
@@ -234,7 +235,7 @@ export default function ChatInterface() {
                     </div>
                   </div>
                 ))}
-                 {isLoading && messages.length > 0 && (
+                 {isLoading && messages.length === 0 && (
                     <div className="flex justify-center py-4">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
