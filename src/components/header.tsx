@@ -85,6 +85,9 @@ export default function Header() {
                       <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /><span>Dashboard</span></Link>
                     </DropdownMenuItem>
                 )}
+                <DropdownMenuItem asChild>
+                  <Link href="/profile/edit"><User className="mr-2 h-4 w-4" /><span>Manage Profile</span></Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log Out</span>

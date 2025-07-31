@@ -109,6 +109,17 @@ export async function getFreelancerById(id: string): Promise<Freelancer | undefi
   }
 }
 
+export async function updateUserProfile(uid: string, data: Partial<UserProfile>) {
+  try {
+      const userRef = ref(database, 'users/' + uid);
+      await update(userRef, data);
+      console.log(`[Firebase] Updated user profile for UID: ${uid}`);
+  } catch (error) {
+      console.error(`[Firebase] Error updating user profile for UID ${uid}:`, error);
+      throw error;
+  }
+}
+
 export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Freelancer, 'id'>>) {
     try {
         const freelancerRef = ref(database, 'freelancers/' + uid);
@@ -129,7 +140,7 @@ async function getParticipantData(userId: string) {
     
     // Prioritize name from the dedicated user profile, then freelancer profile, then email.
     const name = userProfile?.name || freelancerProfile?.name || userProfile?.email || 'User';
-    const avatarUrl = freelancerProfile?.avatarUrl || userProfile?.avatarUrl || '';
+    const avatarUrl = userProfile?.avatarUrl || freelancerProfile?.avatarUrl || '';
     const role = freelancerProfile?.role || userProfile?.role || 'user';
     
     return {
