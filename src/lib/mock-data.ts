@@ -5,6 +5,7 @@ export interface PortfolioItem {
   title: string;
   description: string;
   imageUrl: string;
+  technologiesUsed?: string[];
   hint?: string;
 }
 

@@ -129,21 +129,31 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
                     <CardHeader>
                         <CardTitle>Portfolio</CardTitle>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <CardContent className="space-y-8">
                         {freelancer.portfolio.map(item => (
-                            <div key={item.id} className="group relative overflow-hidden rounded-lg">
-                                <Image
-                                    src={item.imageUrl}
-                                    alt={item.title}
-                                    width={600}
-                                    height={400}
-                                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-                                    data-ai-hint={item.hint}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
-                                <div className="absolute bottom-0 p-4 text-white">
-                                    <h4 className="font-bold">{item.title}</h4>
-                                    <p className="text-sm opacity-90">{item.description}</p>
+                            <div key={item.id} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                                <div className="md:col-span-1">
+                                    <div className="aspect-video rounded-lg overflow-hidden border">
+                                         <Image
+                                            src={item.imageUrl}
+                                            alt={item.title}
+                                            width={600}
+                                            height={400}
+                                            className="object-cover w-full h-full"
+                                            data-ai-hint={item.hint}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="md:col-span-2">
+                                     <h4 className="font-bold text-lg">{item.title}</h4>
+                                    <p className="text-sm text-muted-foreground mt-1 mb-3">{item.description}</p>
+                                    {item.technologiesUsed && item.technologiesUsed.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {item.technologiesUsed.map(tech => (
+                                                <Badge key={tech} variant="secondary">{tech}</Badge>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}

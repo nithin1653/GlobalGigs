@@ -82,14 +82,9 @@ export async function handleUpdateProfile(uid: string, data: Partial<Omit<Freela
 
 export async function handleUpdateUser(uid: string, data: {name: string, avatarUrl?: string}) {
     try {
-        // First, check the user's role from the database.
         const userProfile = await getUserProfile(uid);
-
-        // Always update the primary user profile, which exists for all roles.
         await updateUserProfile(uid, data);
 
-        // If the user is a freelancer, we also need to update their name and avatar
-        // in the separate freelancer-specific profile.
         if (userProfile?.role === 'freelancer') {
             const freelancerUpdateData: Partial<Freelancer> = { name: data.name };
             if (data.avatarUrl) {
@@ -106,15 +101,19 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
     }
 }
 
-export async function handleUpdatePortfolio(uid: string, portfolio: PortfolioItem[]) {
+interface PortfolioFormData extends Omit<PortfolioItem, 'technologiesUsed'> {
+    technologiesUsed?: string;
+}
+
+export async function handleUpdatePortfolio(uid: string, portfolio: PortfolioFormData[]) {
     try {
-        // Add a hint to each portfolio item for AI image search
-        const portfolioWithHints = portfolio.map((item, index) => ({
+        const portfolioWithHintsAndTech = portfolio.map((item, index) => ({
             ...item,
-            id: index, // Ensure there is an ID
+            id: index,
             hint: item.title.split(' ').slice(0, 2).join(' ').toLowerCase(),
+            technologiesUsed: (item.technologiesUsed || '').split(',').map(tech => tech.trim()).filter(Boolean),
         }));
-        await updateFreelancerProfile(uid, { portfolio: portfolioWithHints });
+        await updateFreelancerProfile(uid, { portfolio: portfolioWithHintsAndTech });
         return { success: true };
     } catch (error) {
         console.error(error);

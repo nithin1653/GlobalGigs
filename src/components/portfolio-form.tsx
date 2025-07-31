@@ -36,6 +36,7 @@ const portfolioFormSchema = z.object({
       title: z.string().min(1, 'Title is required'),
       description: z.string().min(1, 'Description is required'),
       imageUrl: z.string().url('Must be a valid URL'),
+      technologiesUsed: z.string().optional(),
     })
   ),
 });
@@ -83,13 +84,18 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
         try {
             const freelancer = await getFreelancerById(userId);
             if (freelancer?.portfolio && freelancer.portfolio.length > 0) {
-                form.reset({ portfolio: freelancer.portfolio });
+                const portfolioWithTechString = freelancer.portfolio.map(item => ({
+                    ...item,
+                    technologiesUsed: item.technologiesUsed?.join(', ') || '',
+                }));
+                form.reset({ portfolio: portfolioWithTechString });
             } else {
                 form.reset({ portfolio: [
                      {
                         title: 'Modern Website Design',
                         description: 'A sleek and responsive design for a tech startup.',
                         imageUrl: 'https://placehold.co/600x400.png',
+                        technologiesUsed: 'React, Next.js, TailwindCSS',
                     },
                 ] });
             }
@@ -226,7 +232,21 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                       </FormItem>
                     )}
                   />
-
+                   <FormField
+                    control={form.control}
+                    name={`portfolio.${index}.technologiesUsed`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Technologies Used (comma-separated)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-between items-center">
                     <div>
                         <FormLabel>Upload New Image</FormLabel>
                         <div className="flex gap-2 mt-2">
@@ -253,11 +273,12 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                     type="button"
                     variant="destructive"
                     size="icon"
-                    className="justify-self-end"
+                    className="self-end"
                     onClick={() => remove(index)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -265,7 +286,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => append({ title: '', description: '', imageUrl: 'https://placehold.co/600x400.png' })}
+              onClick={() => append({ title: '', description: '', imageUrl: 'https://placehold.co/600x400.png', technologiesUsed: '' })}
             >
               <PlusCircle className="mr-2 h-4 w-4" /> Add Portfolio Item
             </Button>

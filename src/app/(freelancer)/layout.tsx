@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Briefcase, User, Settings, LayoutDashboard, ListTodo, Gem, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -31,7 +32,7 @@ export default function FreelancerLayout({
               <span className="">GlobalGigs Freelancer</span>
             </Link>
           </div>
-          <div className="flex-1">
+          <ScrollArea className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navItems.map((item) => (
                 <Link
@@ -47,7 +48,7 @@ export default function FreelancerLayout({
                 </Link>
               ))}
             </nav>
-          </div>
+          </ScrollArea>
         </div>
       </div>
       <div className="flex flex-col">
