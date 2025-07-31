@@ -1,6 +1,5 @@
-
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { getFreelancerById } from '@/lib/firebase';
 import type { Freelancer } from '@/lib/mock-data';
 import { notFound } from 'next/navigation';
@@ -12,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Globe, MessageSquare, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function FreelancerProfilePage({ params }: { params: { id: string } }) {
+export default function FreelancerProfilePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise);
+  const { id } = params;
+
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { id } = params;
 
   useEffect(() => {
     async function loadData() {
