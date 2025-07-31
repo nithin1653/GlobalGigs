@@ -1,24 +1,12 @@
 {
   "rules": {
-    "users": {
-      "$uid": {
-        ".read": "auth != null",
-        ".write": "$uid === auth.uid"
-      }
-    },
+    ".read": "true",
+    ".write": "true",
     "freelancers": {
-      ".read": true,
-      "$uid": {
-        ".write": "$uid === auth.uid"
-      }
+      ".indexOn": ["category", "location"]
     },
     "conversations": {
-      ".read": "auth != null",
-      ".indexOn": ["clientUserId", "freelancerUserId"],
-      "$convId": {
-        ".read": "data.child('clientUserId').val() === auth.uid || data.child('freelancerUserId').val() === auth.uid",
-        ".write": "data.child('clientUserId').val() === auth.uid || data.child('freelancerUserId').val() === auth.uid"
-      }
+      ".indexOn": ["clientUserId", "freelancerUserId"]
     }
   }
 }
