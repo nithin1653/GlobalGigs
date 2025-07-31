@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Conversation, Message, UserProfile } from '@/lib/mock-data';
 import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { Send, Search, Loader2, ArrowLeft } from 'lucide-react';
+import { Send, Search, Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth.js';
 import type { Unsubscribe } from 'firebase/database';
