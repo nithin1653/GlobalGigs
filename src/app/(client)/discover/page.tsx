@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
@@ -38,23 +39,23 @@ export default function DiscoverPage() {
   const filteredFreelancers = useMemo(() => {
     return freelancers.filter((freelancer) => {
       const matchesSearch =
-        freelancer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        freelancer.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        freelancer.skills.some((skill) =>
+        (freelancer.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (freelancer.role?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (freelancer.skills || []).some((skill) =>
           skill.toLowerCase().includes(searchQuery.toLowerCase())
         );
       const matchesCategory =
         category === 'all' || freelancer.category === category;
       const matchesLocation =
         location === '' ||
-        freelancer.location.toLowerCase().includes(location.toLowerCase());
+        (freelancer.location?.toLowerCase() || '').includes(location.toLowerCase());
       return matchesSearch && matchesCategory && matchesLocation;
     });
   }, [searchQuery, category, location, freelancers]);
 
   const uniqueCategories = [
     'all',
-    ...Array.from(new Set(freelancers.map((f) => f.category))),
+    ...Array.from(new Set(freelancers.map((f) => f.category).filter(Boolean))),
   ];
 
   return (
