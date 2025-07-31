@@ -28,7 +28,8 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
         if (!fetchedFreelancer) {
           notFound();
         } else {
-          setFreelancer(fetchedFreelancer);
+          // Ensure uid is set for existing freelancers
+          setFreelancer({ ...fetchedFreelancer, uid: id });
         }
       } catch (error) {
         console.error("Error loading freelancer data", error);
