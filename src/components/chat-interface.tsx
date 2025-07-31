@@ -19,7 +19,6 @@ export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   
@@ -65,7 +64,6 @@ export default function ChatInterface() {
       console.log('[Chat] useEffect triggered. User:', user, 'Profile:', userProfile);
       if (!user || !userProfile) {
         console.log('[Chat] Waiting for user and profile...');
-        // Keep loading until user profile is available
         return;
       }
       
@@ -75,40 +73,44 @@ export default function ChatInterface() {
         const convs = await getConversationsForUser(user.uid, userProfile.role);
         if (!isMounted) return;
         console.log(`[Chat] Fetched ${convs.length} conversations.`);
-        setConversations(convs);
-
+        
         const freelancerId = searchParams.get('freelancerId');
         console.log(`[Chat] freelancerId from URL: ${freelancerId}`);
+        
+        let targetConversation: Conversation | null = null;
+        let finalConversations = [...convs];
 
         if (freelancerId && userProfile.role === 'client') {
             console.log(`[Chat] Client is contacting freelancer: ${freelancerId}`);
             const conversation = await findOrCreateConversation(user.uid, freelancerId);
-             if (!isMounted) return;
+            if (!isMounted) return;
             console.log('[Chat] Found or created conversation:', conversation.id);
 
-            // Check if conversation already in list, if not, add it
-            const existingConvIndex = convs.findIndex(c => c.id === conversation.id);
+            const existingConvIndex = finalConversations.findIndex(c => c.id === conversation.id);
             if (existingConvIndex === -1) {
                 console.log('[Chat] New conversation, adding to the top of the list.');
-                const updatedConvs = [conversation, ...convs];
-                setConversations(updatedConvs);
-                selectConversation(conversation);
+                finalConversations = [conversation, ...finalConversations];
             } else {
-                console.log('[Chat] Existing conversation, moving to top and selecting.');
-                const existingConv = convs[existingConvIndex];
-                const otherConvs = convs.filter(c => c.id !== conversation.id);
-                // Ensure the participant data is fresh from the findOrCreate call
-                const updatedExistingConv = { ...existingConv, participant: conversation.participant };
-                const updatedConvs = [updatedExistingConv, ...otherConvs];
-                setConversations(updatedConvs);
-                selectConversation(updatedExistingConv);
+                console.log('[Chat] Existing conversation, updating participant data and moving to top.');
+                const existingConv = { ...finalConversations[existingConvIndex], participant: conversation.participant };
+                finalConversations.splice(existingConvIndex, 1);
+                finalConversations.unshift(existingConv);
             }
-        } else if (convs.length > 0) {
+            targetConversation = conversation;
+        } else if (finalConversations.length > 0) {
             console.log('[Chat] No specific freelancer targeted, selecting the first conversation.');
-            selectConversation(convs[0]);
+            targetConversation = finalConversations[0];
         } else {
              console.log('[Chat] No conversations found and no freelancer targeted.');
         }
+
+        if (isMounted) {
+            setConversations(finalConversations);
+            if (targetConversation) {
+                selectConversation(targetConversation);
+            }
+        }
+
       } catch (error) {
         console.error("[Chat] Failed to fetch conversations", error);
       } finally {
@@ -156,7 +158,7 @@ export default function ChatInterface() {
     }
   };
   
-  if (isLoading && conversations.length === 0 && !userProfile) {
+  if (isLoading && conversations.length === 0 && !activeConversation) {
     return (
       <div className="flex h-full border-t bg-background/60 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
