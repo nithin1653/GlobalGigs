@@ -2,14 +2,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Briefcase, User, Settings, LayoutDashboard, ListTodo, Gem } from 'lucide-react';
+import { Briefcase, User, Settings, LayoutDashboard, ListTodo, Gem, MessageSquare } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/dashboard/profile', icon: User, label: 'Manage Profile' },
-    { href: '/dashboard/tasks', icon: ListTodo, label: 'Tasks' },
+    { href: '/dashboard/tasks', icon: ListTodo, label: 'Active Gigs' },
+    { href: '/messages', icon: MessageSquare, label: 'Messages' },
     { href: '/dashboard/talent', icon: Gem, label: 'Talent Showcase' },
     { href: '/dashboard/settings', icon: Settings, label: 'Settings' },
 ];

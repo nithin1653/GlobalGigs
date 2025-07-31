@@ -27,13 +27,13 @@ export default function TasksPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">My Tasks</h1>
-        <p className="text-muted-foreground">Here is a list of your current and past tasks.</p>
+        <h1 className="text-3xl font-bold">Active Gigs</h1>
+        <p className="text-muted-foreground">Here is a list of your current and past gigs.</p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Task List</CardTitle>
-          <CardDescription>An overview of all your assigned tasks.</CardDescription>
+          <CardTitle>Gigs List</CardTitle>
+          <CardDescription>An overview of all your assigned gigs.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
