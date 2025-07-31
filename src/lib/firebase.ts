@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get } from "firebase/database";
-import { db, Freelancer, Conversation } from '@/lib/mock-data';
+import { getDatabase, ref, get, child } from "firebase/database";
+import { Freelancer, Conversation } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -20,22 +20,47 @@ const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
 
-// Functions to get data (currently from mock, but prepared for firebase)
+// Functions to get data from Firebase Realtime Database
 export async function getFreelancers(): Promise<Freelancer[]> {
-  // This is where you would fetch from Firebase's Realtime Database
-  // For now, we return the mock data
-  return Promise.resolve(db.freelancers);
+  try {
+    const snapshot = await get(ref(database, 'freelancers'));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      // Firebase returns an object, so we convert it to an array
+      return Object.keys(data).map(key => ({ ...data[key], id: key }));
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching freelancers:", error);
+    return [];
+  }
 }
 
 export async function getFreelancerById(id: string): Promise<Freelancer | undefined> {
-  // This is where you would fetch from Firebase's Realtime Database
-  const freelancers = await getFreelancers();
-  return Promise.resolve(freelancers.find(f => f.id === id));
+  try {
+    const snapshot = await get(child(ref(database, 'freelancers'), id));
+    if (snapshot.exists()) {
+      return { ...snapshot.val(), id: snapshot.key };
+    }
+    return undefined;
+  } catch (error) {
+    console.error(`Error fetching freelancer with ID ${id}:`, error);
+    return undefined;
+  }
 }
 
 export async function getConversations(): Promise<Conversation[]> {
-    // This is where you would fetch from Firebase's Realtime Database
-    return Promise.resolve(db.conversations);
+    try {
+    const snapshot = await get(ref(database, 'conversations'));
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({ ...data[key], id: key }));
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+    return [];
+  }
 }
 
 export { app, auth, database };
