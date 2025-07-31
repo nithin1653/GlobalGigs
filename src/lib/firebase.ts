@@ -22,7 +22,7 @@ const auth = getAuth(app);
 const database = getDatabase(app);
 
 // Function to create user profile in Realtime Database
-export async function createUserProfile(uid: string, data: { email: string, role: 'client' | 'freelancer' }) {
+export async function createUserProfile(uid: string, data: { email: string, name: string, role: 'client' | 'freelancer' }) {
     try {
         const userRef = ref(database, 'users/' + uid);
         const snapshot = await get(userRef);
@@ -40,7 +40,7 @@ export async function createUserProfile(uid: string, data: { email: string, role
                 if (!freelancerSnapshot.exists()) {
                     await set(freelancerRef, {
                         uid: uid,
-                        name: data.email.split('@')[0], // Default name
+                        name: data.name,
                         email: data.email,
                         role: 'New Freelancer',
                         category: 'Uncategorized',
@@ -121,21 +121,22 @@ export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Fr
 }
 
 async function getParticipantData(userId: string) {
-    let participantProfile = await getUserProfile(userId);
-    if (participantProfile?.role === 'freelancer') {
-        const freelancerProfile = await getFreelancerById(userId);
-        return {
-            id: userId,
-            name: freelancerProfile?.name || participantProfile?.email || 'User',
-            avatarUrl: freelancerProfile?.avatarUrl || '',
-            role: freelancerProfile?.role || 'freelancer',
-        }
+    let userProfile = await getUserProfile(userId);
+    let freelancerProfile = null;
+    if (userProfile?.role === 'freelancer') {
+        freelancerProfile = await getFreelancerById(userId);
     }
+    
+    // Prioritize name from the dedicated user profile, then freelancer profile, then email.
+    const name = userProfile?.name || freelancerProfile?.name || userProfile?.email || 'User';
+    const avatarUrl = freelancerProfile?.avatarUrl || userProfile?.avatarUrl || '';
+    const role = freelancerProfile?.role || userProfile?.role || 'user';
+    
     return {
         id: userId,
-        name: participantProfile?.name || participantProfile?.email || 'User',
-        avatarUrl: participantProfile?.avatarUrl || '',
-        role: participantProfile?.role || 'client',
+        name: name,
+        avatarUrl: avatarUrl,
+        role: role,
     }
 }
 

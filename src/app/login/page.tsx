@@ -30,6 +30,7 @@ import PasswordStrength from "@/components/password-strength";
 type UserRole = 'client' | 'freelancer';
 
 export default function LoginPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -82,6 +83,7 @@ export default function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await createUserProfile(userCredential.user.uid, {
             email: userCredential.user.email!,
+            name: name,
             role: role,
         });
         toast({ title: 'Success', description: 'Account created successfully! Redirecting...' });
@@ -107,6 +109,7 @@ export default function LoginPage() {
       if (!userProfile) {
         await createUserProfile(userCredential.user.uid, {
             email: userCredential.user.email!,
+            name: userCredential.user.displayName!,
             role: 'client', // Default role for Google sign-ins
         });
       }
@@ -134,19 +137,25 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {isSigningUp && (
-              <div className="space-y-2">
-                <Label>I am a...</Label>
-                <RadioGroup defaultValue="client" onValueChange={(value: UserRole) => setRole(value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="client" id="r1" />
-                    <Label htmlFor="r1">Client, hiring for a project</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="freelancer" id="r2" />
-                    <Label htmlFor="r2">Freelancer, looking for work</Label>
-                  </div>
-                </RadioGroup>
-              </div>
+              <>
+                <div className="space-y-2">
+                  <Label>I am a...</Label>
+                  <RadioGroup defaultValue="client" onValueChange={(value: UserRole) => setRole(value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="client" id="r1" />
+                      <Label htmlFor="r1">Client, hiring for a project</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="freelancer" id="r2" />
+                      <Label htmlFor="r2">Freelancer, looking for work</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="name">Full Name</Label>
+                    <Input id="name" type="text" placeholder="Priya Patel" required value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+              </>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

@@ -2,10 +2,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import Header from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth.js';
 import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
+import Header from '@/components/header';
 
 export const metadata: Metadata = {
   title: 'GlobalGigs',
