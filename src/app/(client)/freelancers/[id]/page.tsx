@@ -15,17 +15,19 @@ import Link from 'next/link';
 export default function FreelancerProfilePage({ params }: { params: { id: string } }) {
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { id } = params;
   
   useEffect(() => {
-    const id = params.id;
     async function loadData() {
       if (!id) return;
+      setIsLoading(true);
       try {
         const fetchedFreelancer = await getFreelancerById(id);
         if (!fetchedFreelancer) {
           notFound();
+        } else {
+          setFreelancer(fetchedFreelancer);
         }
-        setFreelancer(fetchedFreelancer);
       } catch (error) {
         console.error("Error loading freelancer data", error);
         notFound();
@@ -35,7 +37,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
       }
     }
     loadData();
-  }, [params.id]);
+  }, [id]);
 
 
   if (isLoading) {
@@ -47,7 +49,6 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
   }
 
   if (!freelancer) {
-    // This will be caught by notFound() in useEffect, but as a safeguard:
     return notFound();
   }
 
