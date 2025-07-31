@@ -19,8 +19,11 @@ export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+
   
   const { user, userProfile } = useAuth();
   const searchParams = useSearchParams();
@@ -46,6 +49,7 @@ export default function ChatInterface() {
     setActiveConversation(conv);
     if (conv) {
         setIsLoading(true);
+        setMobileView('chat');
         console.log('[Chat] Subscribing to conversation:', conv.id);
         conversationSubscription.current = subscribeToConversation(conv.id, (newMessages) => {
             console.log(`[Chat] Received ${newMessages.length} messages for conversation ${conv.id}`);
@@ -55,6 +59,7 @@ export default function ChatInterface() {
         });
     } else {
         setMessages([]);
+        setMobileView('list');
     }
   }, [scrollToBottom]);
 
@@ -99,7 +104,8 @@ export default function ChatInterface() {
             targetConversation = conversation;
         } else if (finalConversations.length > 0) {
             console.log('[Chat] No specific freelancer targeted, selecting the first conversation.');
-            targetConversation = finalConversations[0];
+            // Don't auto-select a conversation unless one is explicitly chosen via URL
+            // targetConversation = finalConversations[0];
         } else {
              console.log('[Chat] No conversations found and no freelancer targeted.');
         }
@@ -108,6 +114,8 @@ export default function ChatInterface() {
             setConversations(finalConversations);
             if (targetConversation) {
                 selectConversation(targetConversation);
+            } else {
+                setMobileView('list');
             }
         }
 
@@ -172,7 +180,7 @@ export default function ChatInterface() {
       {/* Sidebar with conversations */}
       <div className={cn(
         "w-full md:w-80 lg:w-96 flex flex-col border-r transition-transform duration-300",
-        activeConversation ? "max-md:-translate-x-full" : "max-md:translate-x-0"
+        mobileView === 'chat' ? "max-md:-translate-x-full" : "max-md:translate-x-0"
         )}>
         <div className="p-4 border-b">
             <h2 className="text-xl font-bold font-headline">Messages</h2>
@@ -217,12 +225,12 @@ export default function ChatInterface() {
       {/* Main chat window */}
       <div className={cn(
         "flex-1 flex-col h-full absolute md:static inset-0 bg-background transition-transform duration-300",
-        activeConversation ? "flex translate-x-0" : "max-md:translate-x-full"
+        mobileView === 'chat' ? "flex translate-x-0" : "max-md:translate-x-full"
       )}>
         {activeConversation ? (
           <>
             <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => selectConversation(null)}>
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileView('list')}>
                     <ArrowLeft />
                 </Button>
               <Avatar>
