@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Briefcase, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from 'react';
@@ -19,13 +20,16 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, createUserProfile } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+
+type UserRole = 'client' | 'freelancer';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('client');
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const { toast } = useToast();
@@ -36,7 +40,11 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (isSigningUp) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await createUserProfile(userCredential.user.uid, {
+            email: userCredential.user.email!,
+            role: role,
+        });
         toast({ title: 'Success', description: 'Account created successfully! Redirecting...' });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
@@ -75,6 +83,21 @@ export default function LoginPage() {
             <CardDescription>{isSigningUp ? 'Enter your details to create a new account' : 'Enter your email below to login to your account'}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {isSigningUp && (
+              <div className="space-y-2">
+                <Label>I am a...</Label>
+                <RadioGroup defaultValue="client" onValueChange={(value: UserRole) => setRole(value)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="client" id="r1" />
+                    <Label htmlFor="r1">Client, hiring for a project</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="freelancer" id="r2" />
+                    <Label htmlFor="r2">Freelancer, looking for work</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="priya@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />

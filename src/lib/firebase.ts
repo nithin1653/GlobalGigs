@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get, child } from "firebase/database";
+import { getDatabase, ref, get, child, set } from "firebase/database";
 import { Freelancer, Conversation } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
@@ -19,6 +19,20 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const database = getDatabase(app);
+
+// Function to create user profile in Realtime Database
+export async function createUserProfile(uid: string, data: { email: string, role: 'client' | 'freelancer' }) {
+    try {
+        const userRef = ref(database, 'users/' + uid);
+        return await set(userRef, {
+            ...data,
+            createdAt: new Date().toISOString(),
+        });
+    } catch (error) {
+        console.error("Error creating user profile:", error);
+        throw error;
+    }
+}
 
 // Functions to get data from Firebase Realtime Database
 export async function getFreelancers(): Promise<Freelancer[]> {
