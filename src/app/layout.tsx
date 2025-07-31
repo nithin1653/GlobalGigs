@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth.js';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'GlobalGigs',
@@ -11,6 +12,23 @@ export const metadata: Metadata = {
     icon: '/favicon.svg',
   },
 };
+
+function RootLayoutContent({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <AuthProvider>
+      <div className="relative flex min-h-screen w-full flex-col">
+        <Header />
+        <main className="flex-1">{children}</main>
+      </div>
+      <Toaster />
+    </AuthProvider>
+  )
+}
+
 
 export default function RootLayout({
   children,
@@ -28,13 +46,9 @@ export default function RootLayout({
         ></link>
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          <div className="relative flex min-h-screen w-full flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
-          </div>
-          <Toaster />
-        </AuthProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <RootLayoutContent>{children}</RootLayoutContent>
+        </Suspense>
       </body>
     </html>
   );

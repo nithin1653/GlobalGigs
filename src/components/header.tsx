@@ -15,29 +15,12 @@ import { Briefcase, LogIn, LogOut, User, UserPlus, LayoutDashboard, MessageSquar
 import { useAuth } from '@/hooks/use-auth.js';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { getUserProfile } from '@/lib/firebase';
-import type { UserProfile } from '@/lib/mock-data';
-
 
 export default function Header() {
   const router = useRouter();
-  const { user, loading, signOut } = useAuth();
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { user, userProfile, loading, signOut } = useAuth();
   const { toast } = useToast();
   
-  useEffect(() => {
-    async function fetchProfile() {
-      if (user) {
-        const profile = await getUserProfile(user.uid);
-        setUserProfile(profile);
-      } else {
-        setUserProfile(null);
-      }
-    }
-    fetchProfile();
-  }, [user]);
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -92,9 +75,9 @@ export default function Header() {
                   <>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                        <p className="text-sm font-medium leading-none">{user.displayName || userProfile?.email || 'User'}</p>
                         <p className="text-xs leading-none text-muted-foreground">
-                          {user.email}
+                          {user.email} {isFreelancer ? '(Freelancer View)' : '(Client View)'}
                         </p>
                       </div>
                     </DropdownMenuLabel>
