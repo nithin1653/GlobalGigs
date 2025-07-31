@@ -291,7 +291,7 @@ export default function ChatInterface() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-center text-muted-foreground">
+          <div className="flex-1 flex items-center justify-center text-center text-muted-foreground p-4">
               <div className="flex flex-col items-center gap-2">
                 <MessageSquare className="h-12 w-12" />
                 <h3 className="text-lg font-semibold">Welcome to your Inbox</h3>
