@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { getFreelancerById } from '@/lib/firebase';
@@ -17,6 +18,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
 
   useEffect(() => {
     async function loadData() {
+      if (!params.id) return;
       const fetchedFreelancer = await getFreelancerById(params.id);
       if (!fetchedFreelancer) {
         notFound();
@@ -37,6 +39,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
   }
 
   if (!freelancer) {
+    // This will be caught by notFound() in useEffect, but as a safeguard:
     return notFound();
   }
 
@@ -109,7 +112,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
                 </CardContent>
             </Card>
 
-            {freelancer.portfolio.length > 0 && (
+            {freelancer.portfolio && freelancer.portfolio.length > 0 && (
                 <Card className="bg-background/60 backdrop-blur-xl">
                     <CardHeader>
                         <CardTitle>Portfolio</CardTitle>
