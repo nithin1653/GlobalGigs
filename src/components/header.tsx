@@ -13,7 +13,7 @@ import {
 import { LayoutGrid, MessageSquare, Briefcase, LogIn, LogOut, Settings, UserPlus } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth.js';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {

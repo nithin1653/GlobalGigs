@@ -10,7 +10,7 @@ import { getConversations } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { Send, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth.js';
 
 export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
