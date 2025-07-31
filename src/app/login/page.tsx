@@ -20,8 +20,9 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
+  User,
 } from 'firebase/auth';
-import { auth, createUserProfile } from '@/lib/firebase';
+import { auth, createUserProfile, getUserProfile } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import PasswordStrength from "@/components/password-strength";
@@ -50,6 +51,15 @@ export default function LoginPage() {
     return strength;
   }, [password]);
 
+  const handleRedirect = async (user: User) => {
+    const userProfile = await getUserProfile(user.uid);
+    if (userProfile?.role === 'freelancer') {
+      router.push('/profile/edit');
+    } else {
+      router.push('/discover');
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -75,29 +85,30 @@ export default function LoginPage() {
             role: role,
         });
         toast({ title: 'Success', description: 'Account created successfully! Redirecting...' });
+        await handleRedirect(userCredential.user);
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Success', description: 'Logged in successfully! Redirecting...' });
+        await handleRedirect(userCredential.user);
       }
-      router.push('/discover');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    // Note: We'd need a separate step to ask for role after Google sign-up.
-    // For now, it will not have a role assigned in the database.
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
+      await createUserProfile(userCredential.user.uid, {
+          email: userCredential.user.email!,
+          role: 'client', // Default role for Google sign-ins
+      });
       toast({ title: 'Success', description: 'Logged in successfully! Redirecting...' });
-      router.push('/discover');
+      await handleRedirect(userCredential.user);
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: error.message });
-    } finally {
       setIsLoading(false);
     }
   };

@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get, child, set } from "firebase/database";
-import { Freelancer, Conversation } from '@/lib/mock-data';
+import { getDatabase, ref, get, child, set, query, equalTo, orderByChild } from "firebase/database";
+import type { Freelancer, Conversation, UserProfile } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -24,15 +24,33 @@ const database = getDatabase(app);
 export async function createUserProfile(uid: string, data: { email: string, role: 'client' | 'freelancer' }) {
     try {
         const userRef = ref(database, 'users/' + uid);
-        return await set(userRef, {
-            ...data,
-            createdAt: new Date().toISOString(),
-        });
+        const snapshot = await get(userRef);
+        if (!snapshot.exists()) {
+             await set(userRef, {
+                ...data,
+                createdAt: new Date().toISOString(),
+            });
+        }
     } catch (error) {
         console.error("Error creating user profile:", error);
         throw error;
     }
 }
+
+export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+    try {
+        const userRef = ref(database, 'users/' + uid);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+            return snapshot.val() as UserProfile;
+        }
+        return null;
+    } catch (error) {
+        console.error("Error fetching user profile:", error);
+        return null;
+    }
+}
+
 
 // Functions to get data from Firebase Realtime Database
 export async function getFreelancers(): Promise<Freelancer[]> {

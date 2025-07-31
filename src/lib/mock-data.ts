@@ -48,3 +48,9 @@ export interface Conversation {
   lastMessage: string;
   lastMessageTimestamp: Date | string; // Allow string to match Firebase Timestamps
 }
+
+export interface UserProfile {
+  email: string;
+  role: 'client' | 'freelancer';
+  createdAt: string;
+}
