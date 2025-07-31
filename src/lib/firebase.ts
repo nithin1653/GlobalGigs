@@ -32,6 +32,30 @@ export async function createUserProfile(uid: string, data: { email: string, role
                 createdAt: new Date().toISOString(),
             });
              console.log(`[Firebase] Created user profile for UID: ${uid}`);
+
+             // If the user is a freelancer, create a basic freelancer profile
+             if (data.role === 'freelancer') {
+                const freelancerRef = ref(database, 'freelancers/' + uid);
+                const freelancerSnapshot = await get(freelancerRef);
+                if (!freelancerSnapshot.exists()) {
+                    await set(freelancerRef, {
+                        uid: uid,
+                        name: data.email.split('@')[0], // Default name
+                        email: data.email,
+                        role: 'New Freelancer',
+                        category: 'Uncategorized',
+                        location: 'Not specified',
+                        rate: 0,
+                        availability: 'Unavailable',
+                        skills: [],
+                        bio: 'Welcome to GlobalGigs!',
+                        avatarUrl: 'https://placehold.co/128x128.png',
+                        portfolio: [],
+                        experience: [],
+                    });
+                    console.log(`[Firebase] Created initial freelancer profile for UID: ${uid}`);
+                }
+             }
         }
     } catch (error) {
         console.error("[Firebase] Error creating user profile:", error);
@@ -62,7 +86,7 @@ export async function getFreelancers(): Promise<Freelancer[]> {
     if (snapshot.exists()) {
       const data = snapshot.val();
       // Firebase returns an object, so we convert it to an array
-      return Object.keys(data).map(key => ({ ...data[key], id: key }));
+      return Object.keys(data).map(key => ({ ...data[key], id: key, uid: key }));
     }
     return [];
   } catch (error) {
@@ -75,7 +99,7 @@ export async function getFreelancerById(id: string): Promise<Freelancer | undefi
   try {
     const snapshot = await get(child(ref(database, 'freelancers'), id));
     if (snapshot.exists()) {
-      return { ...snapshot.val(), id: snapshot.key };
+      return { ...snapshot.val(), id: snapshot.key, uid: snapshot.key };
     }
     console.warn(`[Firebase] No freelancer found for ID: ${id}`);
     return undefined;
@@ -197,7 +221,7 @@ export async function getConversationsForUser(userId: string, userRole: 'client'
 }
 
 
-export async function sendMessage(conversationId: string, message: Message) {
+export async function sendMessage(conversationId: string, message: Omit<Message, 'id'>) {
     const messageWithTimestamp = {
         ...message,
         timestamp: serverTimestamp()

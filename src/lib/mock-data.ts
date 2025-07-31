@@ -18,6 +18,7 @@ export interface Experience {
 
 export interface Freelancer {
   id:string;
+  uid?: string; // Add uid to link to auth user
   name: string;
   role: string;
   category: string;

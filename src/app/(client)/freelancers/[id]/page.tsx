@@ -86,7 +86,7 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
             </CardContent>
             <div className="p-6 border-t">
               <Button asChild className="w-full">
-                <Link href={`/discover/messages?freelancerId=${freelancer.id}`}>
+                <Link href={`/discover/messages?freelancerId=${freelancer.uid}`}>
                     <MessageSquare className="mr-2 h-4 w-4" /> Contact {freelancer.name?.split(' ')[0]}
                 </Link>
               </Button>

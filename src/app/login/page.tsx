@@ -101,10 +101,16 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
-      await createUserProfile(userCredential.user.uid, {
-          email: userCredential.user.email!,
-          role: 'client', // Default role for Google sign-ins
-      });
+      const userProfile = await getUserProfile(userCredential.user.uid);
+      
+      // Only create a profile if one doesn't exist
+      if (!userProfile) {
+        await createUserProfile(userCredential.user.uid, {
+            email: userCredential.user.email!,
+            role: 'client', // Default role for Google sign-ins
+        });
+      }
+      
       toast({ title: 'Success', description: 'Logged in successfully! Redirecting...' });
       await handleRedirect(userCredential.user);
     } catch (error: any) {
