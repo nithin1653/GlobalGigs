@@ -15,12 +15,13 @@ import Link from 'next/link';
 export default function FreelancerProfilePage({ params }: { params: { id: string } }) {
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { id } = params;
 
   useEffect(() => {
     async function loadData() {
-      if (!params.id) return;
+      if (!id) return;
       try {
-        const fetchedFreelancer = await getFreelancerById(params.id);
+        const fetchedFreelancer = await getFreelancerById(id);
         if (!fetchedFreelancer) {
           notFound();
         }
@@ -34,7 +35,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
       }
     }
     loadData();
-  }, [params.id]);
+  }, [id]);
 
 
   if (isLoading) {
