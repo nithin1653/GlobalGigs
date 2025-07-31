@@ -35,16 +35,25 @@ export async function uploadToCloudinary(formData: FormData) {
 
   try {
     const fileBuffer = await file.arrayBuffer();
-    const mimeType = file.type;
-    const encoding = 'base64';
-    const base64Data = Buffer.from(fileBuffer).toString('base64');
-    const fileUri = 'data:' + mimeType + ';' + encoding + ',' + base64Data;
+    const buffer = Buffer.from(fileBuffer);
     
-    const result = await cloudinary.uploader.upload(fileUri, {
-        folder: 'globalgigs_portfolio',
+    const result = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+            {
+                folder: 'globalgigs_portfolio',
+                resource_type: 'auto'
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(result);
+                }
+            }
+        ).end(buffer);
     });
 
-    return { success: true, url: result.secure_url };
+    return { success: true, url: (result as any).secure_url };
   } catch (error) {
     console.error('Cloudinary upload error:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred during upload.';
@@ -83,8 +92,11 @@ export async function handleUpdateProfile(uid: string, data: Partial<Omit<Freela
 export async function handleUpdateUser(uid: string, data: {name: string, avatarUrl?: string}) {
     try {
         const userProfile = await getUserProfile(uid);
-        await updateUserProfile(uid, data);
 
+        // Update the core user profile
+        await updateUserProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
+
+        // If the user is a freelancer, also update their public freelancer profile
         if (userProfile?.role === 'freelancer') {
             const freelancerUpdateData: Partial<Freelancer> = { name: data.name };
             if (data.avatarUrl) {
