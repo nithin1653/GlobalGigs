@@ -13,6 +13,7 @@
       }
     },
     "conversations": {
+      ".read": "auth != null",
       ".indexOn": ["clientUserId", "freelancerUserId"],
       "$convId": {
         ".read": "data.child('clientUserId').val() === auth.uid || data.child('freelancerUserId').val() === auth.uid",
