@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild } from "firebase/database";
-import type { Freelancer, Conversation, UserProfile } from '@/lib/mock-data';
+import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild, push, serverTimestamp, onValue } from "firebase/database";
+import type { Freelancer, Conversation, UserProfile, Message } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -42,7 +42,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
         const userRef = ref(database, 'users/' + uid);
         const snapshot = await get(userRef);
         if (snapshot.exists()) {
-            return snapshot.val() as UserProfile;
+            return { ...snapshot.val(), id: uid } as UserProfile;
         }
         return null;
     } catch (error) {
@@ -91,13 +91,73 @@ export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Fr
     }
 }
 
+export async function findOrCreateConversation(clientUserId: string, freelancerUserId: string): Promise<Conversation> {
+  const conversationsRef = ref(database, 'conversations');
+  const q = query(conversationsRef, orderByChild('clientUserId'), equalTo(clientUserId));
+  const snapshot = await get(q);
 
-export async function getConversations(): Promise<Conversation[]> {
-    try {
-    const snapshot = await get(ref(database, 'conversations'));
+  let existingConversation: Conversation | null = null;
+  if (snapshot.exists()) {
+    const convs = snapshot.val();
+    const convId = Object.keys(convs).find(key => convs[key].freelancerUserId === freelancerUserId);
+    if (convId) {
+      existingConversation = { ...convs[convId], id: convId };
+    }
+  }
+
+  if (existingConversation) {
+    return existingConversation;
+  } else {
+    const freelancerData = await getFreelancerById(freelancerUserId);
+    if (!freelancerData) throw new Error("Freelancer not found");
+
+    const newConversationRef = push(conversationsRef);
+    const newConversation: Omit<Conversation, 'id'> = {
+      clientUserId: clientUserId,
+      freelancerUserId: freelancerUserId,
+      participant: {
+        id: freelancerData.id,
+        name: freelancerData.name,
+        avatarUrl: freelancerData.avatarUrl,
+        role: freelancerData.role
+      },
+      messages: [],
+      lastMessage: "Conversation started.",
+      lastMessageTimestamp: new Date().toISOString()
+    };
+    await set(newConversationRef, newConversation);
+    return { ...newConversation, id: newConversationRef.key! };
+  }
+}
+
+export async function getConversationsForUser(userId: string, userRole: 'client' | 'freelancer'): Promise<Conversation[]> {
+  try {
+    const conversationsRef = ref(database, 'conversations');
+    const userField = userRole === 'client' ? 'clientUserId' : 'freelancerUserId';
+    const q = query(conversationsRef, orderByChild(userField), equalTo(userId));
+    const snapshot = await get(q);
+    
     if (snapshot.exists()) {
       const data = snapshot.val();
-      return Object.keys(data).map(key => ({ ...data[key], id: key }));
+      const conversations = await Promise.all(Object.keys(data).map(async key => {
+        const conv = data[key];
+        const otherUserId = userRole === 'client' ? conv.freelancerUserId : conv.clientUserId;
+        // In a real app, you'd fetch the other user's profile info here
+        // For now, we'll use the participant data stored on the conversation
+        const otherUser = await getFreelancerById(otherUserId) || { name: 'User', role: 'Client', avatarUrl: '' };
+
+        return { 
+            ...conv, 
+            id: key, 
+            participant: { // ensure participant is correct for the current user
+                id: otherUser.id,
+                name: otherUser.name,
+                avatarUrl: otherUser.avatarUrl,
+                role: otherUser.role
+            }
+        };
+      }));
+      return conversations;
     }
     return [];
   } catch (error) {
@@ -105,5 +165,35 @@ export async function getConversations(): Promise<Conversation[]> {
     return [];
   }
 }
+
+
+export async function sendMessage(conversationId: string, message: Message) {
+    const messageWithTimestamp = {
+        ...message,
+        timestamp: serverTimestamp()
+    };
+    const conversationRef = ref(database, `conversations/${conversationId}`);
+    const messagesRef = ref(database, `conversations/${conversationId}/messages`);
+    const newMessageRef = push(messagesRef);
+    await set(newMessageRef, messageWithTimestamp);
+    await update(conversationRef, {
+        lastMessage: message.text,
+        lastMessageTimestamp: serverTimestamp()
+    });
+}
+
+export function subscribeToConversation(conversationId: string, callback: (messages: Message[]) => void) {
+    const messagesRef = ref(database, `conversations/${conversationId}/messages`);
+    return onValue(messagesRef, (snapshot) => {
+        const messages: Message[] = [];
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                messages.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+            });
+        }
+        callback(messages);
+    });
+}
+
 
 export { app, auth, database };

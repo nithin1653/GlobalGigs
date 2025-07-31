@@ -38,6 +38,8 @@ export interface Message {
 
 export interface Conversation {
   id: string;
+  clientUserId: string;
+  freelancerUserId: string;
   participant: {
     id: string;
     name: string;

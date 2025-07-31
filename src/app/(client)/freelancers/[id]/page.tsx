@@ -16,7 +16,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { id } = params;
-  
+
   useEffect(() => {
     async function loadData() {
       if (!id) return;
@@ -65,7 +65,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
               </Avatar>
               <h1 className="text-2xl font-bold font-headline">{freelancer.name}</h1>
               <p className="text-muted-foreground mb-4">{freelancer.role}</p>
-              
+
               <div className="flex flex-wrap justify-center gap-2 mb-6">
                 {freelancer.skills?.map((skill) => (
                   <Badge key={skill} variant="secondary">{skill}</Badge>
@@ -84,7 +84,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
             </CardContent>
             <div className="p-6 border-t">
               <Button asChild className="w-full">
-                <Link href="/discover/messages">
+                <Link href={`/discover/messages?freelancerId=${freelancer.id}`}>
                     <MessageSquare className="mr-2 h-4 w-4" /> Contact {freelancer.name?.split(' ')[0]}
                 </Link>
               </Button>
@@ -129,11 +129,11 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
                     <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {freelancer.portfolio.map(item => (
                             <div key={item.id} className="group relative overflow-hidden rounded-lg">
-                                <Image 
-                                    src={item.imageUrl} 
-                                    alt={item.title} 
-                                    width={600} 
-                                    height={400} 
+                                <Image
+                                    src={item.imageUrl}
+                                    alt={item.title}
+                                    width={600}
+                                    height={400}
                                     className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                                     data-ai-hint={item.hint}
                                 />
