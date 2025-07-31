@@ -6,7 +6,6 @@ import { Briefcase, User, Settings, LayoutDashboard } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import Header from '@/components/header';
 
 const navItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -22,8 +21,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-    <>
-    <Header />
     <div className="grid min-h-[calc(100vh-4rem)] w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
@@ -58,6 +55,5 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
-    </>
   );
 }
