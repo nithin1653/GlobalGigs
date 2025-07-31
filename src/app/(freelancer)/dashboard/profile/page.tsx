@@ -1,49 +1,18 @@
 
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ProfileForm from '@/components/profile-form';
 import UserProfileForm from '@/components/user-profile-form';
 import { Button } from '@/components/ui/button';
 import { User, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
-import { Skeleton } from '@/components/ui/skeleton';
 
 
 type ActiveTab = 'public' | 'account';
 
 export default function EditProfilePage() {
-    const { userProfile, loading } = useAuth();
-    const [activeTab, setActiveTab] = useState<ActiveTab>('account');
-
-    // This useEffect hook ensures that freelancers default to the 'public' tab
-    // once their profile has loaded.
-    useEffect(() => {
-        if (userProfile?.role === 'freelancer') {
-            setActiveTab('public');
-        }
-    }, [userProfile]);
-
-    const isFreelancer = userProfile?.role === 'freelancer';
-
-    if (loading) {
-        return (
-            <div className="container mx-auto max-w-5xl px-4 py-12">
-                 <div className="mb-8">
-                    <Skeleton className="h-10 w-1/3" />
-                    <Skeleton className="mt-2 h-6 w-1/2" />
-                </div>
-                 <div className="flex border-b mb-8">
-                     <Skeleton className="h-10 w-36" />
-                 </div>
-                 <div>
-                    <Skeleton className="h-96 w-full" />
-                 </div>
-            </div>
-        )
-    }
-
+    const [activeTab, setActiveTab] = useState<ActiveTab>('public');
 
     return (
         <div className="container mx-auto max-w-5xl px-4 py-12">
@@ -55,14 +24,12 @@ export default function EditProfilePage() {
             </div>
 
             <div className="flex border-b mb-8">
-                {isFreelancer && (
-                    <TabButton
-                        icon={<Briefcase />}
-                        label="Public Profile"
-                        isActive={activeTab === 'public'}
-                        onClick={() => setActiveTab('public')}
-                    />
-                )}
+                <TabButton
+                    icon={<Briefcase />}
+                    label="Public Profile"
+                    isActive={activeTab === 'public'}
+                    onClick={() => setActiveTab('public')}
+                />
                 <TabButton
                     icon={<User />}
                     label="Account Settings"
@@ -72,7 +39,7 @@ export default function EditProfilePage() {
             </div>
 
             <div>
-                {activeTab === 'public' && isFreelancer && <ProfileForm />}
+                {activeTab === 'public' && <ProfileForm />}
                 {activeTab === 'account' && <UserProfileForm />}
             </div>
         </div>

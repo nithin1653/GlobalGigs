@@ -86,7 +86,7 @@ export default function Header() {
                     </DropdownMenuItem>
                 ): (
                    <DropdownMenuItem asChild>
-                     <Link href="/dashboard/profile"><User className="mr-2 h-4 w-4" /><span>Manage Profile</span></Link>
+                     <Link href="/profile"><User className="mr-2 h-4 w-4" /><span>Manage Profile</span></Link>
                    </DropdownMenuItem>
                 )}
                 
