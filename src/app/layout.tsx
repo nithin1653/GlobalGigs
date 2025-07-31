@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/header';
 import { AuthProvider } from '@/hooks/use-auth.js';
 import { Suspense } from 'react';
+import { usePathname } from 'next/navigation';
 
 export const metadata: Metadata = {
   title: 'GlobalGigs',
@@ -14,20 +15,20 @@ export const metadata: Metadata = {
   },
 };
 
-function RootLayoutContent({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+function ClientRootLayout({ children }: { children: React.ReactNode }) {
+  'use client';
+  const pathname = usePathname();
+  const isDashboard = pathname.startsWith('/dashboard');
+
   return (
     <AuthProvider>
       <div className="relative flex min-h-screen w-full flex-col">
-        <Header />
+        {!isDashboard && <Header />}
         <main className="flex-1">{children}</main>
       </div>
       <Toaster />
     </AuthProvider>
-  )
+  );
 }
 
 
@@ -48,7 +49,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Suspense fallback={<div>Loading...</div>}>
-          <RootLayoutContent>{children}</RootLayoutContent>
+           <ClientRootLayout>{children}</ClientRootLayout>
         </Suspense>
       </body>
     </html>
