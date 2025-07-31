@@ -96,7 +96,7 @@ export default function UserProfileForm() {
     setIsUploading(false);
 
     if (result.success && result.url) {
-      form.setValue('avatarUrl', result.url);
+      form.setValue('avatarUrl', result.url, { shouldValidate: true });
       toast({
         title: 'Image Uploaded!',
         description: 'Your new profile photo is ready to be saved.',
@@ -139,7 +139,6 @@ export default function UserProfileForm() {
                        <Skeleton className="h-32 w-32 rounded-full mx-auto mb-4" />
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      <Skeleton className="h-10 w-full" />
                       <Skeleton className="h-10 w-full" />
                       <div className="flex justify-end">
                           <Skeleton className="h-10 w-24" />
@@ -201,4 +200,3 @@ export default function UserProfileForm() {
     </div>
   );
 }
-
