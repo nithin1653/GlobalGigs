@@ -1,5 +1,6 @@
+
 'use client';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -23,10 +24,11 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { handleEnhanceSkills, handleUpdateProfile } from '@/app/actions';
 import { useState, useEffect } from 'react';
-import { Wand2, Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { Wand2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { getFreelancerById } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ExperienceForm } from '@/components/experience-form';
 
 
 const profileFormSchema = z.object({
@@ -94,11 +96,6 @@ export default function ProfileForm() {
     loadFreelancerData();
   }, [user, form, toast]);
 
-
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'experience',
-  });
 
   async function onSubmit(data: ProfileFormValues) {
     if (!user) return;
@@ -222,7 +219,7 @@ export default function ProfileForm() {
         
         <Card className="bg-background/60 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle>Skills & Experience</CardTitle>
+            <CardTitle>Skills & Experience Summary</CardTitle>
             <CardDescription>Showcase your expertise. Use the AI assistant to find new skills!</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -238,34 +235,8 @@ export default function ProfileForm() {
             </Button>
           </CardContent>
         </Card>
-
-        <Card className="bg-background/60 backdrop-blur-xl">
-            <CardHeader>
-                <CardTitle>Experience History</CardTitle>
-                <CardDescription>List your previous roles.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {fields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start mb-4 p-4 border rounded-lg">
-                        <FormField control={form.control} name={`experience.${index}.role`} render={({ field }) => (
-                            <FormItem className="md:col-span-1"><FormLabel>Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (
-                            <FormItem className="md:col-span-1"><FormLabel>Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <FormField control={form.control} name={`experience.${index}.period`} render={({ field }) => (
-                            <FormItem className="md:col-span-1"><FormLabel>Period</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-                        )}/>
-                        <Button type="button" variant="ghost" size="icon" className="mt-6 text-destructive hover:bg-destructive/10" onClick={() => remove(index)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
-                    </div>
-                ))}
-                 <Button type="button" variant="outline" size="sm" onClick={() => append({ role: '', company: '', period: '' })}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Experience
-                </Button>
-            </CardContent>
-        </Card>
+        
+        <ExperienceForm form={form} />
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isSaving}>
