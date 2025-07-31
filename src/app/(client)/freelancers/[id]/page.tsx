@@ -19,12 +19,19 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
   useEffect(() => {
     async function loadData() {
       if (!params.id) return;
-      const fetchedFreelancer = await getFreelancerById(params.id);
-      if (!fetchedFreelancer) {
+      try {
+        const fetchedFreelancer = await getFreelancerById(params.id);
+        if (!fetchedFreelancer) {
+          notFound();
+        }
+        setFreelancer(fetchedFreelancer);
+      } catch (error) {
+        console.error("Error loading freelancer data", error);
         notFound();
       }
-      setFreelancer(fetchedFreelancer);
-      setIsLoading(false);
+      finally {
+        setIsLoading(false);
+      }
     }
     loadData();
   }, [params.id]);
@@ -52,13 +59,13 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
             <CardContent className="p-6">
               <Avatar className="w-32 h-32 mx-auto mb-4 border-4 border-primary">
                 <AvatarImage src={freelancer.avatarUrl} alt={freelancer.name} />
-                <AvatarFallback className="text-4xl">{freelancer.name.slice(0, 2)}</AvatarFallback>
+                <AvatarFallback className="text-4xl">{freelancer.name?.slice(0, 2)}</AvatarFallback>
               </Avatar>
               <h1 className="text-2xl font-bold font-headline">{freelancer.name}</h1>
               <p className="text-muted-foreground mb-4">{freelancer.role}</p>
               
               <div className="flex flex-wrap justify-center gap-2 mb-6">
-                {freelancer.skills.map((skill) => (
+                {freelancer.skills?.map((skill) => (
                   <Badge key={skill} variant="secondary">{skill}</Badge>
                 ))}
               </div>
@@ -75,8 +82,8 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
             </CardContent>
             <div className="p-6 border-t">
               <Button asChild className="w-full">
-                <Link href="/dashboard/messages">
-                    <MessageSquare className="mr-2 h-4 w-4" /> Contact {freelancer.name.split(' ')[0]}
+                <Link href="/discover/messages">
+                    <MessageSquare className="mr-2 h-4 w-4" /> Contact {freelancer.name?.split(' ')[0]}
                 </Link>
               </Button>
             </div>
@@ -100,7 +107,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
                 </CardHeader>
                 <CardContent>
                     <div className="relative space-y-6 before:absolute before:left-2.5 before:top-4 before:h-[calc(100%-2rem)] before:w-0.5 before:bg-border">
-                        {freelancer.experience.map(exp => (
+                        {freelancer.experience?.map(exp => (
                             <div key={exp.id} className="relative pl-8">
                                 <div className="absolute left-0 top-3 h-2.5 w-2.5 rounded-full bg-primary"></div>
                                 <p className="font-semibold">{exp.role} at {exp.company}</p>

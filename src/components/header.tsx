@@ -11,17 +11,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { Briefcase, LogIn, LogOut, User, UserPlus } from 'lucide-react';
+import { Briefcase, LogIn, LogOut, User, UserPlus, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth.js';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { getUserProfile } from '@/lib/firebase';
+import type { UserProfile } from '@/lib/mock-data';
 
-// This is the public-facing header for logged-out users.
+
 export default function Header() {
   const router = useRouter();
   const { user, loading, signOut } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
   
+  useEffect(() => {
+    async function fetchProfile() {
+      if (user) {
+        const profile = await getUserProfile(user.uid);
+        setUserProfile(profile);
+      } else {
+        setUserProfile(null);
+      }
+    }
+    fetchProfile();
+  }, [user]);
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -32,6 +48,8 @@ export default function Header() {
     }
   };
 
+  const isFreelancer = userProfile?.role === 'freelancer';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/60 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center px-4">
@@ -39,6 +57,14 @@ export default function Header() {
           <Briefcase className="h-6 w-6 text-primary" />
           <span className="hidden font-bold sm:inline-block font-headline text-lg">GlobalGigs</span>
         </Link>
+
+        <nav className="hidden md:flex items-center gap-4 text-sm font-medium">
+            <Link href="/discover" className="text-muted-foreground transition-colors hover:text-foreground">Discover</Link>
+            {!isFreelancer && user && (
+                 <Link href="/discover/messages" className="text-muted-foreground transition-colors hover:text-foreground">Messages</Link>
+            )}
+        </nav>
+
         <div className="ml-auto flex items-center gap-4">
             {!user && !loading && (
                  <Button asChild variant="ghost">
@@ -73,6 +99,11 @@ export default function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    {isFreelancer && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard"><LayoutDashboard className="mr-2 h-4 w-4" /><span>Dashboard</span></Link>
+                        </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log Out</span>
