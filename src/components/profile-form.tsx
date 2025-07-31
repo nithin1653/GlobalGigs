@@ -188,7 +188,7 @@ export default function ProfileForm() {
                    </CardContent>
               </Card>
           </div>
-      )
+      );
   }
 
   return (
@@ -251,7 +251,7 @@ export default function ProfileForm() {
                             <FormItem className="md:col-span-1"><FormLabel>Role</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`experience.${index}.company`} render={({ field }) => (
-                            <FormItem className="md:col-span-1"><FormLabel>Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormMessage /></FormItem>
+                            <FormItem className="md:col-span-1"><FormLabel>Company</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                         )}/>
                         <FormField control={form.control} name={`experience.${index}.period`} render={({ field }) => (
                             <FormItem className="md:col-span-1"><FormLabel>Period</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
