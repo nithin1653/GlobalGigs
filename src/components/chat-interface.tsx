@@ -38,14 +38,18 @@ export default function ChatInterface() {
   }, []);
 
   const selectConversation = useCallback((conv: Conversation | null) => {
+    console.log('[Chat] Selecting conversation:', conv?.id);
     if (conversationSubscription.current) {
+        console.log('[Chat] Unsubscribing from previous conversation.');
         conversationSubscription.current();
         conversationSubscription.current = null;
     }
     setActiveConversation(conv);
     if (conv) {
         setIsLoading(true);
+        console.log('[Chat] Subscribing to conversation:', conv.id);
         conversationSubscription.current = subscribeToConversation(conv.id, (newMessages) => {
+            console.log(`[Chat] Received ${newMessages.length} messages for conversation ${conv.id}`);
             setMessages(newMessages);
             setIsLoading(false);
             setTimeout(scrollToBottom, 100); 
@@ -58,43 +62,58 @@ export default function ChatInterface() {
   useEffect(() => {
     let isMounted = true;
     async function loadInitialData() {
+      console.log('[Chat] useEffect triggered. User:', user, 'Profile:', userProfile);
       if (!user || !userProfile) {
+        console.log('[Chat] Waiting for user and profile...');
         // Keep loading until user profile is available
         return;
       }
       
       setIsLoading(true);
+      console.log(`[Chat] Loading initial data for user ${user.uid} with role ${userProfile.role}`);
       try {
         const convs = await getConversationsForUser(user.uid, userProfile.role);
         if (!isMounted) return;
+        console.log(`[Chat] Fetched ${convs.length} conversations.`);
         setConversations(convs);
 
         const freelancerId = searchParams.get('freelancerId');
+        console.log(`[Chat] freelancerId from URL: ${freelancerId}`);
 
         if (freelancerId && userProfile.role === 'client') {
+            console.log(`[Chat] Client is contacting freelancer: ${freelancerId}`);
             const conversation = await findOrCreateConversation(user.uid, freelancerId);
              if (!isMounted) return;
+            console.log('[Chat] Found or created conversation:', conversation.id);
+
             // Check if conversation already in list, if not, add it
             const existingConvIndex = convs.findIndex(c => c.id === conversation.id);
             if (existingConvIndex === -1) {
+                console.log('[Chat] New conversation, adding to the top of the list.');
                 const updatedConvs = [conversation, ...convs];
                 setConversations(updatedConvs);
                 selectConversation(conversation);
             } else {
-                // If it exists, move it to the top and select it
+                console.log('[Chat] Existing conversation, moving to top and selecting.');
                 const existingConv = convs[existingConvIndex];
                 const otherConvs = convs.filter(c => c.id !== conversation.id);
-                const updatedConvs = [existingConv, ...otherConvs];
+                // Ensure the participant data is fresh from the findOrCreate call
+                const updatedExistingConv = { ...existingConv, participant: conversation.participant };
+                const updatedConvs = [updatedExistingConv, ...otherConvs];
                 setConversations(updatedConvs);
-                selectConversation(existingConv);
+                selectConversation(updatedExistingConv);
             }
         } else if (convs.length > 0) {
+            console.log('[Chat] No specific freelancer targeted, selecting the first conversation.');
             selectConversation(convs[0]);
+        } else {
+             console.log('[Chat] No conversations found and no freelancer targeted.');
         }
       } catch (error) {
-        console.error("Failed to fetch conversations", error);
+        console.error("[Chat] Failed to fetch conversations", error);
       } finally {
         if (isMounted) {
+            console.log('[Chat] Finished loading initial data.');
             setIsLoading(false);
         }
       }
@@ -102,6 +121,7 @@ export default function ChatInterface() {
     loadInitialData();
 
     return () => {
+        console.log('[Chat] Component unmounting, cleaning up subscription.');
         isMounted = false;
         if (conversationSubscription.current) {
             conversationSubscription.current();
@@ -117,6 +137,7 @@ export default function ChatInterface() {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversation || !user) return;
 
+    console.log(`[Chat] Sending message to conversation ${activeConversation.id}`);
     setIsSending(true);
     const message: Omit<Message, 'id'> = {
       senderId: user.uid,
@@ -127,14 +148,15 @@ export default function ChatInterface() {
     try {
         await sendMessage(activeConversation.id, message);
         setNewMessage('');
+        console.log('[Chat] Message sent successfully.');
     } catch (error) {
-        console.error("Error sending message", error);
+        console.error("[Chat] Error sending message", error);
     } finally {
         setIsSending(false);
     }
   };
   
-  if (isLoading && conversations.length === 0) {
+  if (isLoading && conversations.length === 0 && !userProfile) {
     return (
       <div className="flex h-full border-t bg-background/60 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />

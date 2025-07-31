@@ -1,4 +1,5 @@
 
+
 export interface PortfolioItem {
   id: number;
   title: string;
@@ -37,19 +38,25 @@ export interface Message {
   timestamp: Date | string | object; // Allow object for serverTimestamp
 }
 
-export interface Conversation {
-  id: string;
-  clientUserId: string;
-  freelancerUserId: string;
-  participant: {
+export interface ParticipantInfo {
     id: string;
     name: string;
     avatarUrl: string;
     role: string;
-  };
+}
+
+
+export interface Conversation {
+  id: string;
+  clientUserId: string;
+  freelancerUserId: string;
+  participant: ParticipantInfo;
   messages: Message[];
   lastMessage: string;
   lastMessageTimestamp: Date | string | object; // Allow object for serverTimestamp
+  // Optional detailed participant info
+  client?: ParticipantInfo;
+  freelancer?: ParticipantInfo;
 }
 
 export interface UserProfile {
