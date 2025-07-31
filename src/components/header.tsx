@@ -10,18 +10,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { LayoutGrid, MessageSquare, Briefcase, LogIn, Settings, UserPlus } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { LayoutGrid, MessageSquare, Briefcase, LogIn, LogOut, Settings, UserPlus } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading, signOut } = useAuth();
+  const { toast } = useToast();
   const isAuthPage = pathname === '/login';
   
   // Don't render header on login page
   if (isAuthPage) {
     return null;
   }
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({ title: 'Signed Out', description: 'You have been successfully signed out.'});
+      router.push('/');
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error', description: error.message });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/60 backdrop-blur-xl">
@@ -56,36 +71,47 @@ export default function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://placehold.co/32x32.png" alt="User Avatar" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarImage src={user?.photoURL || "https://placehold.co/32x32.png"} alt="User Avatar" />
+                  <AvatarFallback>{user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Guest</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    guest@example.com
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-               <DropdownMenuItem asChild>
-                <Link href="/login"><LogIn className="mr-2 h-4 w-4" /><span>Log In</span></Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="#"><UserPlus className="mr-2 h-4 w-4" /><span>Sign Up</span></Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <LayoutGrid className="mr-2 h-4 w-4" />
-                <span>Dashboard</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </DropdownMenuItem>
+              {loading ? <DropdownMenuLabel>Loading...</DropdownMenuLabel> : user ? (
+                <>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.displayName || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <LayoutGrid className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log Out</span>
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                   <DropdownMenuItem asChild>
+                    <Link href="/login"><LogIn className="mr-2 h-4 w-4" /><span>Log In</span></Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/login"><UserPlus className="mr-2 h-4 w-4" /><span>Sign Up</span></Link>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

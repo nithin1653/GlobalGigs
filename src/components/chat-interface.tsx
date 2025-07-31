@@ -1,29 +1,50 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { conversations as mockConversations, Conversation, Message } from '@/lib/mock-data';
+import { Conversation, Message } from '@/lib/mock-data';
+import { getConversations } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { Send, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ChatInterface() {
-  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(conversations[0]?.id || null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getConversations();
+        setConversations(data);
+        if (data.length > 0) {
+          setActiveConversationId(data[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch conversations", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const activeConversation = conversations.find(c => c.id === activeConversationId);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConversation) return;
+    if (!newMessage.trim() || !activeConversation || !user) return;
 
     const message: Message = {
       id: `msg-${Date.now()}`,
-      senderId: 'user-1', // Assuming current user's ID
+      senderId: user.uid, // Current user's ID from Firebase Auth
       text: newMessage,
       timestamp: new Date(),
     };
@@ -43,6 +64,10 @@ export default function ChatInterface() {
     setConversations(updatedConversations);
     setNewMessage('');
   };
+  
+  if (isLoading) {
+    return <div className="flex h-full border-t bg-background/60 items-center justify-center">Loading chats...</div>;
+  }
 
   return (
     <div className="flex h-full border-t bg-background/60">
@@ -76,7 +101,7 @@ export default function ChatInterface() {
                 <div className="flex justify-between items-center">
                     <p className="font-semibold truncate">{conv.participant.name}</p>
                     <p className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDistanceToNow(conv.lastMessageTimestamp, { addSuffix: true })}
+                        {formatDistanceToNow(new Date(conv.lastMessageTimestamp), { addSuffix: true })}
                     </p>
                 </div>
                 <p className="text-sm text-muted-foreground truncate">{conv.lastMessage}</p>
@@ -141,8 +166,9 @@ export default function ChatInterface() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type a message..."
                   autoComplete="off"
+                  disabled={!user}
                 />
-                <Button type="submit" size="icon" disabled={!newMessage.trim()}>
+                <Button type="submit" size="icon" disabled={!newMessage.trim() || !user}>
                   <Send className="h-4 w-4" />
                 </Button>
               </form>

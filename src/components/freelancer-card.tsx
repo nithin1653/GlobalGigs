@@ -35,7 +35,7 @@ export function FreelancerCard({ freelancer }: FreelancerCardProps) {
         </div>
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span>{freelancer.location}</span>
-          <span className="font-semibold text-foreground flex items-center gap-1"><DollarSign size={14} />{freelancer.rate}/hr</span>
+          <span className="font-semibold text-foreground flex items-center gap-1">₹{freelancer.rate}/hr</span>
         </div>
       </CardContent>
       <CardFooter className="p-2 bg-transparent">

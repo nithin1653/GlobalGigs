@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -9,13 +9,31 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { FreelancerCard } from '@/components/freelancer-card';
-import { freelancers, Freelancer } from '@/lib/mock-data';
+import type { Freelancer } from '@/lib/mock-data';
+import { getFreelancers } from '@/lib/firebase';
 import { Search } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DiscoverPage() {
+  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [location, setLocation] = useState('');
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getFreelancers();
+        setFreelancers(data);
+      } catch (error) {
+        console.error("Failed to fetch freelancers", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const filteredFreelancers = useMemo(() => {
     return freelancers.filter((freelancer) => {
@@ -32,7 +50,7 @@ export default function DiscoverPage() {
         freelancer.location.toLowerCase().includes(location.toLowerCase());
       return matchesSearch && matchesCategory && matchesLocation;
     });
-  }, [searchQuery, category, location]);
+  }, [searchQuery, category, location, freelancers]);
 
   const uniqueCategories = [
     'all',
@@ -81,16 +99,44 @@ export default function DiscoverPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredFreelancers.map((freelancer) => (
-          <FreelancerCard key={freelancer.id} freelancer={freelancer} />
-        ))}
-      </div>
-       {filteredFreelancers.length === 0 && (
-          <div className="col-span-full text-center py-16">
-            <p className="text-muted-foreground text-lg">No freelancers match your criteria.</p>
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredFreelancers.map((freelancer) => (
+              <FreelancerCard key={freelancer.id} freelancer={freelancer} />
+            ))}
           </div>
-        )}
+           {filteredFreelancers.length === 0 && (
+              <div className="col-span-full text-center py-16">
+                <p className="text-muted-foreground text-lg">No freelancers match your criteria.</p>
+              </div>
+            )}
+        </>
+      )}
     </div>
   );
+}
+
+function CardSkeleton() {
+  return (
+    <div className="flex flex-col space-y-3 p-4 border rounded-xl">
+      <div className="flex items-center space-x-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[150px]" />
+          <Skeleton className="h-4 w-[100px]" />
+        </div>
+      </div>
+      <div className="space-y-2 pt-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    </div>
+  )
 }

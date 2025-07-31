@@ -1,18 +1,43 @@
-import { freelancers } from '@/lib/mock-data';
+'use client';
+import { useState, useEffect } from 'react';
+import { getFreelancerById } from '@/lib/firebase';
+import type { Freelancer } from '@/lib/mock-data';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, MessageSquare, CheckCircle, DollarSign } from 'lucide-react';
+import { Globe, MessageSquare, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function FreelancerProfilePage({ params }: { params: { id: string } }) {
-  const freelancer = freelancers.find((f) => f.id === params.id);
+  const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      const fetchedFreelancer = await getFreelancerById(params.id);
+      if (!fetchedFreelancer) {
+        notFound();
+      }
+      setFreelancer(fetchedFreelancer);
+      setIsLoading(false);
+    }
+    loadData();
+  }, [params.id]);
+
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!freelancer) {
-    notFound();
+    return notFound();
   }
 
   return (
@@ -38,7 +63,7 @@ export default function FreelancerProfilePage({ params }: { params: { id: string
               <div className="space-y-2 text-left text-sm text-muted-foreground">
                 <div className="flex items-center"><Globe className="w-4 h-4 mr-2 text-primary" /> {freelancer.location}</div>
                 <div className="flex items-center">
-                    <DollarSign className="w-4 h-4 mr-2 text-primary" /> {freelancer.rate}/hr
+                    <DollarSign className="w-4 h-4 mr-2 text-primary" /> ₹{freelancer.rate}/hr
                 </div>
                 <div className={`flex items-center ${freelancer.availability === 'Unavailable' ? 'text-destructive' : 'text-green-500'}`}>
                     <CheckCircle className="w-4 h-4 mr-2" /> {freelancer.availability}

@@ -29,14 +29,34 @@ export interface Freelancer {
   experience: Experience[];
 }
 
-export const freelancers: Freelancer[] = [
+export interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: Date | string; // Allow string to match Firebase Timestamps
+}
+
+export interface Conversation {
+  id: string;
+  participant: {
+    id: string;
+    name: string;
+    avatarUrl: string;
+    role: string;
+  };
+  messages: Message[];
+  lastMessage: string;
+  lastMessageTimestamp: Date | string; // Allow string to match Firebase Timestamps
+}
+
+const freelancers: Freelancer[] = [
   {
     id: '1',
     name: 'Priya Sharma',
     role: 'Senior UX/UI Designer',
     category: 'Design',
     location: 'Mumbai, India',
-    rate: 65,
+    rate: 5000,
     availability: 'Full-time',
     skills: ['Figma', 'Adobe XD', 'User Research', 'Prototyping', 'Design Systems'],
     bio: 'A passionate UX/UI designer with over 8 years of experience creating intuitive and beautiful digital experiences. I specialize in user-centered design methodologies to solve complex problems.',
@@ -56,7 +76,7 @@ export const freelancers: Freelancer[] = [
     role: 'Full-Stack Developer',
     category: 'Development',
     location: 'Bangalore, India',
-    rate: 90,
+    rate: 7000,
     availability: 'Part-time',
     skills: ['React', 'Node.js', 'TypeScript', 'PostgreSQL', 'AWS'],
     bio: 'Experienced full-stack developer focused on building scalable and high-performance web applications. I have a strong background in both front-end and back-end technologies.',
@@ -72,11 +92,11 @@ export const freelancers: Freelancer[] = [
   },
   {
     id: '3',
-    name: 'Sameer Khan',
+    name: 'Aarav Patel',
     role: 'DevOps Engineer',
     category: 'Development',
-    location: 'New York, USA',
-    rate: 85,
+    location: 'Pune, India',
+    rate: 6500,
     availability: 'Full-time',
     skills: ['Kubernetes', 'Docker', 'Terraform', 'CI/CD', 'Python'],
     bio: 'DevOps professional with a knack for automation and infrastructure as code. I help companies build robust and scalable deployment pipelines on cloud platforms.',
@@ -91,11 +111,11 @@ export const freelancers: Freelancer[] = [
     name: 'Anjali Mehta',
     role: 'Content Strategist',
     category: 'Marketing',
-    location: 'London, UK',
-    rate: 60,
+    location: 'Delhi, India',
+    rate: 4500,
     availability: 'Full-time',
     skills: ['SEO', 'Content Writing', 'Copywriting', 'Social Media', 'Analytics'],
-    bio: 'I help brands tell their stories through compelling content that drives engagement and conversions. Data-driven and creative content strategist with international experience.',
+    bio: 'I help brands tell their stories through compelling content that drives engagement and conversions. Data-driven and creative content strategist with national experience.',
     avatarUrl: 'https://placehold.co/128x128.png',
     portfolio: [
         { id: 1, title: 'Blog Content Strategy', description: 'Developed a content strategy for a D2C brand that increased organic traffic by 200%.', imageUrl: 'https://placehold.co/600x400.png', hint: 'blog article' },
@@ -109,14 +129,14 @@ export const freelancers: Freelancer[] = [
     name: 'Vikram Singh',
     role: 'Graphic Designer',
     category: 'Design',
-    location: 'Berlin, Germany',
-    rate: 70,
+    location: 'Jaipur, India',
+    rate: 5500,
     availability: 'Part-time',
     skills: ['Branding', 'Illustration', 'Adobe Illustrator', 'Adobe Photoshop', 'Typography'],
     bio: 'A visual storyteller creating unique brand identities and illustrations. I bring ideas to life with a strong sense of aesthetics and attention to detail.',
     avatarUrl: 'https://placehold.co/128x128.png',
     portfolio: [
-      { id: 1, title: 'Brand Identity for Startup', description: 'Created a full brand guide including logo, color palette, and typography for a global startup.', imageUrl: 'https://placehold.co/600x400.png', hint: 'brand logo' },
+      { id: 1, title: 'Brand Identity for Startup', description: 'Created a full brand guide including logo, color palette, and typography for a local startup.', imageUrl: 'https://placehold.co/600x400.png', hint: 'brand logo' },
       { id: 2, title: 'Illustrated Marketing Materials', description: 'Designed and illustrated a series of posters and social media graphics.', imageUrl: 'https://placehold.co/600x400.png', hint: 'poster design' },
     ],
     experience: [
@@ -128,8 +148,8 @@ export const freelancers: Freelancer[] = [
     name: 'Fatima Ansari',
     role: 'Mobile App Developer',
     category: 'Development',
-    location: 'Toronto, Canada',
-    rate: 80,
+    location: 'Hyderabad, India',
+    rate: 6000,
     availability: 'Full-time',
     skills: ['Swift', 'Kotlin', 'React Native', 'Firebase', 'REST APIs'],
     bio: 'Dedicated mobile developer with expertise in building native and cross-platform applications for iOS and Android. I focus on clean code and great user experience.',
@@ -145,54 +165,39 @@ export const freelancers: Freelancer[] = [
   },
 ];
 
-export interface Message {
-  id: string;
-  senderId: string;
-  text: string;
-  timestamp: Date;
-}
-
-export interface Conversation {
-  id: string;
-  participant: {
-    id: string;
-    name: string;
-    avatarUrl: string;
-    role: string;
-  };
-  messages: Message[];
-  lastMessage: string;
-  lastMessageTimestamp: Date;
-}
-
-export const conversations: Conversation[] = [
+const conversations: Conversation[] = [
     {
       id: 'conv-1',
       participant: freelancers[0],
       messages: [
-        { id: 'msg-1', senderId: 'client-1', text: 'Hi Priya, I was impressed by your portfolio. Are you available for a new project?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2) },
-        { id: 'msg-2', senderId: '1', text: 'Hi there! Thank you. Yes, I have some availability starting next month. What did you have in mind?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1) },
+        { id: 'msg-1', senderId: 'client-1', text: 'Hi Priya, I was impressed by your portfolio. Are you available for a new project?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+        { id: 'msg-2', senderId: '1', text: 'Hi there! Thank you. Yes, I have some availability starting next month. What did you have in mind?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString() },
       ],
       lastMessage: 'Hi there! Thank you. Yes, I have some availability starting next month. What did you have in mind?',
-      lastMessageTimestamp: new Date(Date.now() - 1000 * 60 * 60 * 1),
+      lastMessageTimestamp: new Date(Date.now() - 1000 * 60 * 60 * 1).toISOString(),
     },
     {
       id: 'conv-2',
       participant: freelancers[1],
       messages: [
-        { id: 'msg-3', senderId: '2', text: 'The project is under NDA, but I can share more details once we sign it.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2) },
+        { id: 'msg-3', senderId: '2', text: 'The project is under NDA, but I can share more details once we sign it.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString() },
       ],
       lastMessage: 'The project is under NDA, but I can share more details once we sign it.',
-      lastMessageTimestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+      lastMessageTimestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
     },
      {
       id: 'conv-3',
       participant: freelancers[3],
       messages: [
-        { id: 'msg-4', senderId: 'client-1', text: 'Your content strategy work is exactly what we need. Could we schedule a call?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3) },
-        { id: 'msg-5', senderId: '4', text: 'Absolutely! I am available tomorrow afternoon. Does that work for you?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 20) },
+        { id: 'msg-4', senderId: 'client-1', text: 'Your content strategy work is exactly what we need. Could we schedule a call?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString() },
+        { id: 'msg-5', senderId: '4', text: 'Absolutely! I am available tomorrow afternoon. Does that work for you?', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString() },
       ],
       lastMessage: 'Absolutely! I am available tomorrow afternoon. Does that work for you?',
-      lastMessageTimestamp: new Date(Date.now() - 1000 * 60 * 60 * 20),
+      lastMessageTimestamp: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
     }
   ];
+
+export const db = {
+  freelancers,
+  conversations,
+}
