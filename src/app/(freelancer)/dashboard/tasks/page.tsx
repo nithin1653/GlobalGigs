@@ -1,4 +1,5 @@
 
+'use client';
 import {
   Card,
   CardContent,
@@ -15,15 +16,47 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-
-const tasks = [
-    { id: 1, title: 'Design a new logo for a startup', status: 'In Progress', deadline: '2024-08-15' },
-    { id: 2, title: 'Develop a React component library', status: 'Completed', deadline: '2024-07-30' },
-    { id: 3, title: 'Write documentation for the API', status: 'Pending', deadline: '2024-08-20' },
-    { id: 4, title: 'Fix bugs in the payment gateway', status: 'In Progress', deadline: '2024-08-10' },
-]
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState } from "react";
+import { getGigsForUser } from "@/lib/firebase";
+import { Gig } from "@/lib/mock-data";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from 'date-fns';
 
 export default function TasksPage() {
+  const { user } = useAuth();
+  const [gigs, setGigs] = useState<Gig[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadGigs() {
+      if (!user) return;
+      setIsLoading(true);
+      try {
+        const userGigs = await getGigsForUser(user.uid);
+        setGigs(userGigs);
+      } catch (error) {
+        console.error("Failed to load gigs", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadGigs();
+  }, [user]);
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return 'default';
+      case 'in progress':
+        return 'secondary';
+      case 'pending':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
   return (
     <div>
       <div className="mb-8">
@@ -36,28 +69,61 @@ export default function TasksPage() {
           <CardDescription>An overview of all your assigned gigs.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Task</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Deadline</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium">{task.title}</TableCell>
-                  <TableCell>
-                    <Badge variant={task.status === 'Completed' ? 'default' : 'secondary'}>
-                      {task.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{task.deadline}</TableCell>
+           {isLoading ? (
+             <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Array.from({length: 3}).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+             </Table>
+           ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Task</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {gigs.length > 0 ? gigs.map((gig) => (
+                  <TableRow key={gig.id}>
+                    <TableCell className="font-medium">{gig.title}</TableCell>
+                    <TableCell>{gig.client?.name}</TableCell>
+                    <TableCell>${gig.price}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(gig.status)}>
+                        {gig.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{gig.createdAt ? format(new Date(gig.createdAt), 'PP') : '-'}</TableCell>
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">No gigs found.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+           )}
         </CardContent>
       </Card>
     </div>

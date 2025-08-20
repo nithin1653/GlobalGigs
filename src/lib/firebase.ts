@@ -2,8 +2,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild, push, serverTimestamp, onValue } from "firebase/database";
-import type { Freelancer, Conversation, UserProfile, Message } from '@/lib/mock-data';
+import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild, push, serverTimestamp, onValue, Unsubscribe } from "firebase/database";
+import type { Freelancer, Conversation, UserProfile, Message, Gig, GigProposal } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -131,7 +131,7 @@ export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Fr
     }
 }
 
-async function getParticipantData(userId: string) {
+export async function getParticipantData(userId: string) {
     let userProfile = await getUserProfile(userId);
     let freelancerProfile = null;
     if (userProfile?.role === 'freelancer') {
@@ -250,7 +250,7 @@ export async function sendMessage(conversationId: string, message: Omit<Message,
     console.log(`[Firebase] Message sent to ${conversationId}`);
 }
 
-export function subscribeToConversation(conversationId: string, callback: (messages: Message[]) => void) {
+export function subscribeToConversation(conversationId: string, callback: (messages: Message[]) => void): Unsubscribe {
     const messagesRef = query(ref(database, `conversations/${conversationId}/messages`), orderByChild('timestamp'));
     console.log(`[Firebase] Subscribing to messages for conversation: ${conversationId}`);
     return onValue(messagesRef, (snapshot) => {
@@ -265,5 +265,75 @@ export function subscribeToConversation(conversationId: string, callback: (messa
     });
 }
 
+// Gig and Proposal Functions
+export async function createGigProposal(proposalData: Omit<GigProposal, 'id' | 'status' | 'createdAt'>): Promise<string> {
+    const newProposalRef = push(ref(database, 'proposals'));
+    const fullProposalData = {
+        ...proposalData,
+        status: 'Pending',
+        createdAt: serverTimestamp(),
+    };
+    await set(newProposalRef, fullProposalData);
+    return newProposalRef.key!;
+}
+
+export async function getGigProposalById(proposalId: string): Promise<GigProposal | null> {
+    const proposalRef = ref(database, `proposals/${proposalId}`);
+    const snapshot = await get(proposalRef);
+    if (snapshot.exists()) {
+        return { ...snapshot.val(), id: proposalId };
+    }
+    return null;
+}
+
+export function subscribeToGigProposal(proposalId: string, callback: (proposal: GigProposal | null) => void): Unsubscribe {
+    const proposalRef = ref(database, `proposals/${proposalId}`);
+    return onValue(proposalRef, (snapshot) => {
+        if (snapshot.exists()) {
+            callback({ ...snapshot.val(), id: proposalId });
+        } else {
+            callback(null);
+        }
+    });
+}
+
+export async function updateGigProposalStatus(proposalId: string, status: 'Accepted' | 'Declined') {
+    const proposalRef = ref(database, `proposals/${proposalId}`);
+    await update(proposalRef, { status });
+}
+
+
+export async function acceptGig(gigData: Gig) {
+    const newGigRef = push(ref(database, 'gigs'));
+    await set(newGigRef, {
+        ...gigData,
+        id: newGigRef.key!,
+        createdAt: serverTimestamp()
+    });
+}
+
+export async function getGigsForUser(userId: string): Promise<Gig[]> {
+    const gigsRef = ref(database, 'gigs');
+    const q = query(gigsRef, orderByChild('freelancerId'), equalTo(userId));
+    const snapshot = await get(q);
+    const gigs: Gig[] = [];
+    if (snapshot.exists()) {
+        snapshot.forEach((child) => {
+            gigs.push({ ...child.val(), id: child.key });
+        });
+    }
+    // Also fetch gigs where the user is the client
+    const q2 = query(gigsRef, orderByChild('clientId'), equalTo(userId));
+    const snapshot2 = await get(q2);
+     if (snapshot2.exists()) {
+        snapshot2.forEach((child) => {
+            // Avoid duplicates if a user is both client and freelancer on a gig (unlikely)
+            if (!gigs.some(g => g.id === child.key)) {
+                 gigs.push({ ...child.val(), id: child.key });
+            }
+        });
+    }
+    return gigs.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
 
 export { app, auth, database };

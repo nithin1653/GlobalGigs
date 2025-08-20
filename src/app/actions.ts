@@ -2,12 +2,13 @@
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
-import { updateFreelancerProfile, updateUserProfile, getUserProfile } from '@/lib/firebase';
-import type { Freelancer, PortfolioItem } from '@/lib/mock-data';
+import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus } from '@/lib/firebase';
+import type { Freelancer, PortfolioItem, GigProposal } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
 import { getAuth } from 'firebase-admin/auth';
 import { adminApp } from '@/lib/firebase-admin'; // We need to create this file
+import { revalidatePath } from 'next/cache';
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -104,12 +105,10 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
         });
 
         // If the user is a freelancer, also update their public freelancer profile
-        if (userProfile?.role === 'freelancer') {
-            const freelancerUpdateData: Partial<Freelancer> = { name: data.name };
-            if (data.avatarUrl) {
-                freelancerUpdateData.avatarUrl = data.avatarUrl;
-            }
-            await updateFreelancerProfile(uid, freelancerUpdateData);
+        if (userProfile?.role === 'freelancer' && data.avatarUrl) {
+            await updateFreelancerProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
+        } else if (userProfile?.role === 'freelancer') {
+            await updateFreelancerProfile(uid, { name: data.name });
         }
         
         return { success: true };
@@ -134,6 +133,65 @@ export async function handleUpdatePortfolio(uid: string, portfolio: PortfolioFor
             technologiesUsed: (item.technologiesUsed || '').split(',').map(tech => tech.trim()).filter(Boolean),
         }));
         await updateFreelancerProfile(uid, { portfolio: portfolioWithHintsAndTech });
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function sendGigProposal(proposal: Omit<GigProposal, 'id' | 'status' | 'createdAt'>) {
+    try {
+        const proposalId = await createGigProposal(proposal);
+        
+        const messageText = `Gig Proposal: ${proposal.title}`;
+        await sendMessage(proposal.conversationId, {
+            senderId: proposal.freelancerId,
+            text: messageText,
+            timestamp: new Date(),
+            metadata: {
+                type: 'gig-proposal',
+                proposalId: proposalId,
+            }
+        });
+        
+        return { success: true, proposalId };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function acceptGigProposal(proposal: GigProposal) {
+    try {
+        const client = await getParticipantData(proposal.clientId);
+        const freelancer = await getParticipantData(proposal.freelancerId);
+        
+        await acceptGig({
+            ...proposal,
+            status: 'In Progress',
+            client,
+            freelancer,
+            createdAt: new Date().toISOString(),
+        });
+        
+        await updateGigProposalStatus(proposal.id, 'Accepted');
+        
+        const messageText = `Accepted Gig: ${proposal.title}`;
+        await sendMessage(proposal.conversationId, {
+            senderId: proposal.clientId,
+            text: messageText,
+            timestamp: new Date(),
+             metadata: {
+                type: 'gig-acceptance',
+                proposalId: proposal.id,
+            }
+        });
+        
+        revalidatePath('/dashboard/tasks');
+        
         return { success: true };
     } catch (error) {
         console.error(error);

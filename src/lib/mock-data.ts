@@ -38,6 +38,10 @@ export interface Message {
   senderId: string;
   text: string;
   timestamp: Date | string | object; // Allow object for serverTimestamp
+  metadata?: {
+    type: 'gig-proposal' | 'gig-acceptance';
+    proposalId?: string;
+  }
 }
 
 export interface ParticipantInfo {
@@ -68,4 +72,29 @@ export interface UserProfile {
   createdAt: string;
   name?: string;
   avatarUrl?: string;
+}
+
+export interface GigProposal {
+  id: string;
+  conversationId: string;
+  freelancerId: string;
+  clientId: string;
+  title: string;
+  description: string;
+  price: number;
+  status: 'Pending' | 'Accepted' | 'Declined';
+  createdAt: string | object;
+}
+
+export interface Gig {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  status: 'In Progress' | 'Completed' | 'Pending';
+  clientId: string;
+  freelancerId: string;
+  client?: ParticipantInfo;
+  freelancer?: ParticipantInfo;
+  createdAt: string;
 }

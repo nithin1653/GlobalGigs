@@ -7,13 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import type { Conversation, Message, UserProfile } from '@/lib/mock-data';
-import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile } from '@/lib/firebase';
+import type { Conversation, Message, UserProfile, GigProposal } from '@/lib/mock-data';
+import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile, getGigProposalById } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { Send, Search, Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
+import { Send, Search, Loader2, ArrowLeft, MessageSquare, Briefcase } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth.js';
 import type { Unsubscribe } from 'firebase/database';
+import { ProposeGigDialog } from '@/components/propose-gig-dialog';
+import { GigProposalCard } from '@/components/gig-proposal-card';
 
 export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -245,28 +247,43 @@ export default function ChatInterface() {
             
             <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
               <div className="space-y-6">
-                {messages.map((message) => (
-                  <div key={message.id} className={cn(
-                      'flex items-end gap-2',
-                      message.senderId === user?.uid ? 'justify-end' : 'justify-start'
-                    )}>
-                    {message.senderId !== user?.uid && (
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={activeConversation.participant.avatarUrl} />
-                            <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    )}
-                    <div className={cn(
-                        'max-w-xs lg:max-w-md p-3 rounded-2xl',
-                        message.senderId === user?.uid
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-muted rounded-bl-none'
+                 {messages.map((message) => {
+                  const isProposal = message.metadata?.type === 'gig-proposal';
+
+                  if (isProposal) {
+                    return (
+                        <GigProposalCard 
+                            key={message.id} 
+                            proposalId={message.metadata.proposalId!} 
+                            currentUserId={user!.uid}
+                        />
+                    );
+                  }
+
+                  return (
+                    <div key={message.id} className={cn(
+                        'flex items-end gap-2',
+                        message.senderId === user?.uid ? 'justify-end' : 'justify-start'
+                      )}>
+                      {message.senderId !== user?.uid && (
+                          <Avatar className="h-8 w-8">
+                              <AvatarImage src={activeConversation.participant.avatarUrl} />
+                              <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
+                          </Avatar>
                       )}
-                    >
-                      <p className="text-sm">{message.text}</p>
+                      <div className={cn(
+                          'max-w-xs lg:max-w-md p-3 rounded-2xl',
+                          message.senderId === user?.uid
+                            ? 'bg-primary text-primary-foreground rounded-br-none'
+                            : 'bg-muted rounded-bl-none'
+                        )}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+
                  {isLoading && messages.length === 0 && (
                     <div className="flex justify-center py-4">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -277,6 +294,12 @@ export default function ChatInterface() {
 
             <div className="p-4 border-t bg-background/80 backdrop-blur-lg">
               <form onSubmit={handleSendMessage} className="flex items-center gap-4">
+                {userProfile?.role === 'freelancer' && (
+                  <ProposeGigDialog 
+                    conversation={activeConversation}
+                    freelancerId={user.uid}
+                  />
+                )}
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
