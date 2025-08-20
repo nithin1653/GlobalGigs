@@ -34,7 +34,7 @@ export default function ChatInterface() {
   
   const scrollToBottom = useCallback(() => {
     if (scrollAreaRef.current) {
-        const scrollableNode = scrollAreaRef.current.children[0]?.children[0];
+        const scrollableNode = scrollAreaRef.current.children[1];
         if (scrollableNode) {
             scrollableNode.scrollTo({ top: scrollableNode.scrollHeight, behavior: 'smooth' });
         }
@@ -51,6 +51,7 @@ export default function ChatInterface() {
     setActiveConversation(conv);
     if (conv) {
         setIsLoading(true);
+        setMessages([]);
         setMobileView('chat');
         console.log('[Chat] Subscribing to conversation:', conv.id);
         conversationSubscription.current = subscribeToConversation(conv.id, (newMessages) => {
@@ -226,8 +227,8 @@ export default function ChatInterface() {
 
       {/* Main chat window */}
       <div className={cn(
-        "flex-1 flex-col h-full absolute md:static inset-0 bg-background transition-transform duration-300",
-        mobileView === 'chat' ? "flex translate-x-0" : "max-md:translate-x-full"
+        "flex-1 flex flex-col h-full absolute md:static inset-0 bg-background transition-transform duration-300",
+        mobileView === 'chat' ? "translate-x-0" : "max-md:translate-x-full"
       )}>
         {activeConversation ? (
           <>
