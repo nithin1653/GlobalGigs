@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { CheckCircle, Briefcase, Users, Search, IndianRupee, PenTool } from 'lucide-react';
+import Header from '@/components/header';
 
 const clientFeatures = [
   {
@@ -61,6 +62,7 @@ const testimonials = [
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
+      <Header />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative py-20 md:py-32 text-center bg-background">

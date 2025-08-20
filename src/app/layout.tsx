@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Suspense } from 'react';
-import ClientLayout from '@/components/client-layout';
+import { AuthProvider } from '@/hooks/use-auth.js';
+import { Toaster } from '@/components/ui/toaster';
 
 
 export const metadata: Metadata = {
@@ -29,7 +30,12 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <Suspense fallback={<div>Loading...</div>}>
-           <ClientLayout>{children}</ClientLayout>
+            <AuthProvider>
+                <div className="relative flex min-h-screen w-full flex-col">
+                    {children}
+                </div>
+                <Toaster />
+            </AuthProvider>
         </Suspense>
       </body>
     </html>

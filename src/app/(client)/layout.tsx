@@ -1,9 +1,16 @@
-// This layout is specific to the (client) user module.
-// It will wrap pages like /discover and /freelancers/[id]
+
+'use client';
+import Header from '@/components/header';
+
 export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+        <Header />
+        <main className="flex-1">{children}</main>
+    </>
+    );
 }
