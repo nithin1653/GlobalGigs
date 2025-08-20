@@ -29,15 +29,12 @@ export default function ChatInterface() {
   
   const { user, userProfile } = useAuth();
   const searchParams = useSearchParams();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const conversationSubscription = useRef<Unsubscribe | null>(null);
   
   const scrollToBottom = useCallback(() => {
-    if (scrollAreaRef.current) {
-        const scrollableNode = scrollAreaRef.current.children[1];
-        if (scrollableNode) {
-            scrollableNode.scrollTo({ top: scrollableNode.scrollHeight, behavior: 'smooth' });
-        }
+    if (viewportRef.current) {
+        viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, []);
 
@@ -179,7 +176,7 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex h-full border-t bg-background/60">
+    <div className="flex h-full bg-background/60">
       {/* Sidebar with conversations */}
       <div className={cn(
         "w-full md:w-80 lg:w-96 flex flex-col border-r transition-transform duration-300",
@@ -227,12 +224,12 @@ export default function ChatInterface() {
 
       {/* Main chat window */}
       <div className={cn(
-        "flex-1 flex flex-col h-full absolute md:static inset-0 bg-background transition-transform duration-300",
+        "flex-1 flex flex-col absolute md:static inset-0 bg-background transition-transform duration-300",
         mobileView === 'chat' ? "translate-x-0" : "max-md:translate-x-full"
       )}>
         {activeConversation ? (
           <>
-            <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg">
+            <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg shrink-0">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileView('list')}>
                     <ArrowLeft />
                 </Button>
@@ -246,8 +243,8 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1 p-6" ref={scrollAreaRef}>
-              <div className="space-y-6">
+            <ScrollArea className="flex-1" viewportRef={viewportRef}>
+              <div className="space-y-6 p-6">
                  {messages.map((message) => {
                   const isProposal = message.metadata?.type === 'gig-proposal';
 
@@ -293,7 +290,7 @@ export default function ChatInterface() {
               </div>
             </ScrollArea>
 
-            <div className="p-4 border-t bg-background/80 backdrop-blur-lg">
+            <div className="p-4 border-t bg-background/80 backdrop-blur-lg shrink-0">
               <form onSubmit={handleSendMessage} className="flex items-center gap-4">
                 {userProfile?.role === 'freelancer' && (
                   <ProposeGigDialog 
