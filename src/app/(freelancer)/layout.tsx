@@ -76,21 +76,21 @@ export default function FreelancerLayout({
         </div>
       </div>
       
-      <div className="flex flex-col">
+      <div className="flex flex-col md:h-screen">
          {/* Mobile Header */}
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 md:hidden">
+        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 shrink-0 md:hidden">
             <Link href="/" className="flex items-center gap-2 font-semibold">
               <Briefcase className="h-6 w-6 text-primary" />
               <span className="">GlobalGigs</span>
             </Link>
         </header>
 
-        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background overflow-auto">
+        <main className="flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background overflow-y-auto">
             {children}
         </main>
         
         {/* Mobile Bottom Nav */}
-        <footer className="md:hidden sticky bottom-0 z-10 border-t bg-muted/40 p-2">
+        <footer className="md:hidden sticky bottom-0 z-10 border-t bg-muted/40 p-2 shrink-0">
             <nav className="grid grid-cols-4 items-center justify-items-center gap-1 text-sm font-medium">
                  {mobileNavItems.map((item) => (
                     <Link
