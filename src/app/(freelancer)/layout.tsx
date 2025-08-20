@@ -59,7 +59,7 @@ export default function FreelancerLayout({
               ))}
             </nav>
           </ScrollArea>
-           <div className="mt-auto p-4 border-t">
+           <div className="p-4 border-t">
              <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                  <Link
                   href="/dashboard/settings"
