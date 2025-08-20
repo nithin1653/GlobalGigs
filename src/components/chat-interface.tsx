@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import type { Conversation, Message } from '@/lib/mock-data';
 import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
@@ -30,7 +30,7 @@ export default function ChatInterface() {
   const searchParams = useSearchParams();
   const viewportRef = useRef<HTMLDivElement>(null);
   const conversationSubscription = useRef<Unsubscribe | null>(null);
-  
+
   const scrollToBottom = useCallback(() => {
     if (viewportRef.current) {
         viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
@@ -157,7 +157,7 @@ export default function ChatInterface() {
         "flex flex-col border-r h-full",
         mobileView === 'chat' && "hidden md:flex"
         )}>
-        <div className="p-4 border-b shrink-0">
+        <div className="p-4 border-b flex-shrink-0">
             <h2 className="text-xl font-bold font-headline">Messages</h2>
             <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -201,7 +201,7 @@ export default function ChatInterface() {
        <div className={cn("flex flex-col h-full", mobileView === 'list' && "hidden md:flex")}>
         {activeConversation ? (
           <>
-            <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg shrink-0">
+            <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg flex-shrink-0">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileView('list')}>
                     <ArrowLeft />
                 </Button>
@@ -216,7 +216,7 @@ export default function ChatInterface() {
             </div>
             
             <ScrollArea className="flex-1">
-                <div className="space-y-6 p-6" ref={viewportRef}>
+                <div ref={viewportRef} className="space-y-6 p-6">
                     {messages.map((message) => {
                     const isProposal = message.metadata?.type === 'gig-proposal';
 
@@ -260,9 +260,10 @@ export default function ChatInterface() {
                         </div>
                     )}
                 </div>
+                 <ScrollBar />
             </ScrollArea>
 
-            <div className="p-4 border-t bg-background/80 backdrop-blur-lg shrink-0">
+            <div className="p-4 border-t bg-background/80 backdrop-blur-lg flex-shrink-0">
               <form onSubmit={handleSendMessage} className="flex items-center gap-4">
                 {userProfile?.role === 'freelancer' && (
                   <ProposeGigDialog 
