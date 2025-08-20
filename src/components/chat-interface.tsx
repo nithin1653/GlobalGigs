@@ -104,10 +104,6 @@ export default function ChatInterface() {
 
       } catch (error) {
         console.error("[Chat] Failed to fetch conversations", error);
-      } finally {
-        if (isMounted) {
-            // setIsLoading(false); // isLoading is handled inside selectConversation
-        }
       }
     }
     loadInitialData();
@@ -269,7 +265,6 @@ export default function ChatInterface() {
                 </div>
             </ScrollArea>
 
-
             <div className="p-4 border-t bg-background/80 backdrop-blur-lg shrink-0">
               <form onSubmit={handleSendMessage} className="flex items-center gap-4">
                 {userProfile?.role === 'freelancer' && (
@@ -304,5 +299,3 @@ export default function ChatInterface() {
     </div>
   );
 }
-
-    
