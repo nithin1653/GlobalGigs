@@ -7,13 +7,14 @@ import type { Freelancer, Conversation, UserProfile, Message, Gig, GigProposal }
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDA8a_whDDg-4xrsD9ruCj725aJKxwquwE",
-  authDomain: "globalgigs.firebaseapp.com",
-  databaseURL: "https://globalgigs-default-rtdb.firebaseio.com",
-  projectId: "globalgigs",
-  storageBucket: "globalgigs.firebasestorage.app",
-  messagingSenderId: "670117679270",
-  appId: "1:670117679270:web:2baa0d03746a2ace502467"
+  "projectId": "globalgigs",
+  "appId": "1:670117679270:web:62a99c2bf73535b7502467",
+  "storageBucket": "globalgigs.firebasestorage.app",
+  "apiKey": "AIzaSyDA8a_whDDg-4xrsD9ruCj725aJKxwquwE",
+  "authDomain": "globalgigs.firebaseapp.com",
+  "measurementId": "",
+  "messagingSenderId": "670117679270",
+  "databaseURL": "https://globalgigs-default-rtdb.firebaseio.com"
 };
 
 // Initialize Firebase
@@ -337,3 +338,5 @@ export async function getGigsForUser(userId: string): Promise<Gig[]> {
 }
 
 export { app, auth, database };
+
+    
