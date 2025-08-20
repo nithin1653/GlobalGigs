@@ -31,14 +31,107 @@ import {
 } from 'recharts';
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpRight, IndianRupee, Users, Briefcase, MessageSquare } from "lucide-react"
+import { IndianRupee, Users, Briefcase, MessageSquare } from "lucide-react"
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect, useState, useMemo } from "react";
+import { getGigsForUser } from "@/lib/firebase";
+import { Gig } from "@/lib/mock-data";
+import { formatDistanceToNow } from 'date-fns';
+import { Skeleton } from "@/components/ui/skeleton";
 
 const revenueData: any[] = [];
 const profileViewsData: any[] = [];
-const recentActivities: any[] = [];
 
 
 export default function DashboardPage() {
+    const { user } = useAuth();
+    const [gigs, setGigs] = useState<Gig[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadGigs() {
+            if (!user) return;
+            setIsLoading(true);
+            try {
+                const userGigs = await getGigsForUser(user.uid);
+                setGigs(userGigs);
+            } catch (error) {
+                console.error("Failed to load gigs", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        loadGigs();
+    }, [user]);
+
+    const stats = useMemo(() => {
+        const totalRevenue = gigs
+            .filter(gig => gig.status === 'Completed')
+            .reduce((sum, gig) => sum + gig.price, 0);
+
+        const activeGigs = gigs.filter(gig => gig.status.toLowerCase() === 'in progress').length;
+        
+        return { totalRevenue, activeGigs };
+    }, [gigs]);
+
+    const recentActivities = useMemo(() => {
+        return gigs
+            .slice(0, 5) // Get the 5 most recent gigs
+            .map(gig => ({
+                type: 'New Gig',
+                from: gig.client?.name || 'N/A',
+                content: gig.title,
+                time: gig.createdAt ? formatDistanceToNow(new Date(gig.createdAt), { addSuffix: true }) : '-',
+            }));
+    }, [gigs]);
+    
+      if (isLoading) {
+        return (
+          <div className="flex flex-col gap-8">
+            <div className="mb-4">
+              <Skeleton className="h-9 w-48 mb-2" />
+              <Skeleton className="h-5 w-72" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-1" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4 mb-1" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-[300px] w-full" />
+                </CardContent>
+              </Card>
+            </div>
+             <Card>
+                <CardHeader>
+                  <Skeleton className="h-6 w-1/4 mb-1" />
+                  <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-40 w-full" />
+                </CardContent>
+             </Card>
+          </div>
+        );
+    }
+
+
   return (
     <div className="flex flex-col gap-8">
         <div className="mb-4">
@@ -54,9 +147,9 @@ export default function DashboardPage() {
                     <IndianRupee className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₹0</div>
+                    <div className="text-2xl font-bold">₹{stats.totalRevenue.toLocaleString()}</div>
                     <p className="text-xs text-muted-foreground">
-                        No revenue data yet
+                        From completed gigs
                     </p>
                 </CardContent>
             </Card>
@@ -68,9 +161,9 @@ export default function DashboardPage() {
                      <Briefcase className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">0</div>
+                    <div className="text-2xl font-bold">{stats.activeGigs}</div>
                     <p className="text-xs text-muted-foreground">
-                        No active gigs
+                        Currently in progress
                     </p>
                 </CardContent>
             </Card>
@@ -201,4 +294,20 @@ export default function DashboardPage() {
         </Card>
     </div>
   )
+}
+
+
+function CardSkeleton() {
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-7 w-1/3 mb-1" />
+                <Skeleton className="h-3 w-1/2" />
+            </CardContent>
+        </Card>
+    )
 }
