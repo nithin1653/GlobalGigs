@@ -315,26 +315,17 @@ export async function acceptGig(gigData: Gig) {
 
 export async function getGigsForUser(userId: string): Promise<Gig[]> {
     const gigsRef = ref(database, 'gigs');
-    const q = query(gigsRef, orderByChild('freelancerId'), equalTo(userId));
-    const snapshot = await get(q);
-    const gigs: Gig[] = [];
+    const snapshot = await get(gigsRef);
+    const allGigs: Gig[] = [];
     if (snapshot.exists()) {
         snapshot.forEach((child) => {
-            gigs.push({ ...child.val(), id: child.key });
-        });
-    }
-    // Also fetch gigs where the user is the client
-    const q2 = query(gigsRef, orderByChild('clientId'), equalTo(userId));
-    const snapshot2 = await get(q2);
-     if (snapshot2.exists()) {
-        snapshot2.forEach((child) => {
-            // Avoid duplicates if a user is both client and freelancer on a gig (unlikely)
-            if (!gigs.some(g => g.id === child.key)) {
-                 gigs.push({ ...child.val(), id: child.key });
+            const gig = { ...child.val(), id: child.key };
+            if (gig.freelancerId === userId || gig.clientId === userId) {
+                allGigs.push(gig);
             }
         });
     }
-    return gigs.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return allGigs.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export { app, auth, database };
