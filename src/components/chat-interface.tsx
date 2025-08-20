@@ -6,12 +6,11 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Conversation, Message } from '@/lib/mock-data';
 import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { Send, Search, Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Send, Loader2, ArrowLeft, MessageSquare, Circle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth.js';
 import type { Unsubscribe } from 'firebase/database';
 import { ProposeGigDialog } from '@/components/propose-gig-dialog';
@@ -24,8 +23,7 @@ export default function ChatInterface() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
-
+  
   const { user, userProfile } = useAuth();
   const searchParams = useSearchParams();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -46,7 +44,6 @@ export default function ChatInterface() {
     if (conv) {
         setIsLoading(true);
         setMessages([]);
-        setMobileView('chat');
         conversationSubscription.current = subscribeToConversation(conv.id, (newMessages) => {
             setMessages(newMessages);
             setIsLoading(false);
@@ -54,7 +51,6 @@ export default function ChatInterface() {
         });
     } else {
         setMessages([]);
-        setMobileView('list');
     }
   }, [scrollToBottom]);
 
@@ -98,7 +94,6 @@ export default function ChatInterface() {
                 selectConversation(finalConversations[0]);
             } else {
                 setIsLoading(false);
-                setMobileView('list');
             }
         }
 
@@ -151,149 +146,121 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] lg:grid-cols-[384px_1fr] h-full">
-      {/* Sidebar with conversations */}
-      <div className={cn(
-        "flex flex-col border-r h-full",
-        mobileView === 'chat' && "hidden md:flex"
-        )}>
-        <div className="p-4 border-b flex-shrink-0">
-            <h2 className="text-xl font-bold font-headline">Messages</h2>
-            <div className="relative mt-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search messages..." className="pl-9" />
-            </div>
-        </div>
-        <ScrollArea className="flex-1">
-          {conversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => selectConversation(conv)}
-              className={cn(
-                'flex items-center gap-4 p-4 w-full text-left transition-colors hover:bg-muted/50',
-                activeConversation?.id === conv.id && 'bg-muted'
-              )}
-            >
-              <Avatar>
-                <AvatarImage src={conv.participant.avatarUrl} alt={conv.participant.name}/>
-                <AvatarFallback>{conv.participant.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <div className="flex justify-between items-center">
-                    <p className="font-semibold truncate">{conv.participant.name}</p>
-                    {conv.lastMessageTimestamp && <p className="text-xs text-muted-foreground whitespace-nowrap">
-                        {formatDistanceToNow(new Date(conv.lastMessageTimestamp as string), { addSuffix: true })}
-                    </p>}
-                </div>
-                <p className="text-sm text-muted-foreground truncate">{conv.lastMessage}</p>
-              </div>
-            </button>
-          ))}
-           {(conversations.length === 0 && !isLoading) && (
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              No conversations yet.
-            </div>
-          )}
-        </ScrollArea>
-      </div>
-
-      {/* Main chat window */}
-       <div className={cn("flex flex-col h-full", mobileView === 'list' && "hidden md:flex")}>
-        {activeConversation ? (
-          <>
-            <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg flex-shrink-0">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileView('list')}>
-                    <ArrowLeft />
-                </Button>
-              <Avatar>
-                <AvatarImage src={activeConversation.participant.avatarUrl} />
-                <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold">{activeConversation.participant.name}</p>
-                <p className="text-xs text-muted-foreground">{activeConversation.participant.role}</p>
-              </div>
-            </div>
-            
-            <ScrollArea className="flex-1">
-                <div ref={viewportRef} className="space-y-6 p-6">
-                    {messages.map((message) => {
-                    const isProposal = message.metadata?.type === 'gig-proposal';
-
-                    if (isProposal) {
-                        return (
-                            <GigProposalCard 
-                                key={message.id} 
-                                proposalId={message.metadata.proposalId!} 
-                                currentUserId={user!.uid}
-                            />
-                        );
-                    }
-
-                    return (
-                        <div key={message.id} className={cn(
-                            'flex items-end gap-2',
-                            message.senderId === user?.uid ? 'justify-end' : 'justify-start'
+    <div className="flex flex-col h-full bg-background">
+        {/* Horizontal "Stories" Bar */}
+        <div className="flex-shrink-0 border-b">
+            <ScrollArea className="w-full whitespace-nowrap">
+                <div className="flex items-center gap-4 p-4">
+                {conversations.map((conv) => (
+                    <button
+                        key={conv.id}
+                        onClick={() => selectConversation(conv)}
+                        className="flex flex-col items-center gap-2 text-center w-20"
+                    >
+                        <Avatar className={cn(
+                            "h-16 w-16 border-2 transition-all",
+                            activeConversation?.id === conv.id ? "border-primary" : "border-transparent"
                         )}>
-                        {message.senderId !== user?.uid && (
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={activeConversation.participant.avatarUrl} />
-                                <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        )}
-                        <div className={cn(
-                            'max-w-xs lg:max-w-md p-3 rounded-2xl',
-                            message.senderId === user?.uid
-                                ? 'bg-primary text-primary-foreground rounded-br-none'
-                                : 'bg-muted rounded-bl-none'
-                            )}
-                        >
-                            <p className="text-sm whitespace-pre-wrap">{message.text}</p>
-                        </div>
-                        </div>
-                    );
-                    })}
-
-                    {(isLoading && messages.length === 0) && (
-                        <div className="flex justify-center py-4">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                        </div>
-                    )}
+                            <AvatarImage src={conv.participant.avatarUrl} alt={conv.participant.name}/>
+                            <AvatarFallback>{conv.participant.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <p className={cn(
+                            "text-xs truncate w-full",
+                             activeConversation?.id === conv.id ? "font-semibold text-primary" : "text-muted-foreground"
+                        )}>
+                            {conv.participant.name}
+                        </p>
+                    </button>
+                ))}
                 </div>
-                 <ScrollBar />
             </ScrollArea>
+        </div>
 
-            <div className="p-4 border-t bg-background/80 backdrop-blur-lg flex-shrink-0">
-              <form onSubmit={handleSendMessage} className="flex items-center gap-4">
-                {userProfile?.role === 'freelancer' && (
-                  <ProposeGigDialog 
-                    conversation={activeConversation}
-                    freelancerId={user.uid}
-                  />
-                )}
-                <Input
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
-                  autoComplete="off"
-                  disabled={!user || isSending}
-                />
-                <Button type="submit" size="icon" disabled={!newMessage.trim() || !user || isSending}>
-                  {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
-                </Button>
-              </form>
+
+        {/* Chat Window */}
+        <div className="flex-1 flex flex-col min-h-0">
+            {activeConversation ? (
+            <>
+                {/* Header is now part of the top bar */}
+
+                <ScrollArea className="flex-1" viewportRef={viewportRef}>
+                    <div className="space-y-6 p-6">
+                        {messages.map((message) => {
+                        const isProposal = message.metadata?.type === 'gig-proposal';
+
+                        if (isProposal) {
+                            return (
+                                <GigProposalCard 
+                                    key={message.id} 
+                                    proposalId={message.metadata.proposalId!} 
+                                    currentUserId={user!.uid}
+                                />
+                            );
+                        }
+
+                        return (
+                            <div key={message.id} className={cn(
+                                'flex items-end gap-2',
+                                message.senderId === user?.uid ? 'justify-end' : 'justify-start'
+                            )}>
+                            {message.senderId !== user?.uid && (
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={activeConversation.participant.avatarUrl} />
+                                    <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            )}
+                            <div className={cn(
+                                'max-w-xs lg:max-w-md p-3 rounded-2xl',
+                                message.senderId === user?.uid
+                                    ? 'bg-primary text-primary-foreground rounded-br-none'
+                                    : 'bg-muted rounded-bl-none'
+                                )}
+                            >
+                                <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                            </div>
+                            </div>
+                        );
+                        })}
+
+                        {(isLoading && messages.length === 0) && (
+                            <div className="flex justify-center py-4">
+                                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
+
+                <div className="flex-shrink-0 p-4 border-t bg-background/80 backdrop-blur-lg">
+                <form onSubmit={handleSendMessage} className="flex items-center gap-4">
+                    {userProfile?.role === 'freelancer' && (
+                    <ProposeGigDialog 
+                        conversation={activeConversation}
+                        freelancerId={user.uid}
+                    />
+                    )}
+                    <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type a message..."
+                        autoComplete="off"
+                        disabled={!user || isSending}
+                    />
+                    <Button type="submit" size="icon" disabled={!newMessage.trim() || !user || isSending}>
+                    {isSending ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
+                    </Button>
+                </form>
+                </div>
+            </>
+            ) : (
+            <div className="flex-1 flex items-center justify-center text-center text-muted-foreground p-4">
+                <div className="flex flex-col items-center gap-2">
+                    <MessageSquare className="h-12 w-12" />
+                    <h3 className="text-lg font-semibold">Welcome to your Inbox</h3>
+                    <p>Select a conversation from the top to start chatting</p>
+                </div>
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-center text-muted-foreground p-4">
-              <div className="flex flex-col items-center gap-2">
-                <MessageSquare className="h-12 w-12" />
-                <h3 className="text-lg font-semibold">Welcome to your Inbox</h3>
-                <p>Select a conversation to start chatting</p>
-            </div>
-          </div>
-        )}
-      </div>
+            )}
+        </div>
     </div>
   );
 }
