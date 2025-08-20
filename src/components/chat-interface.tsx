@@ -198,10 +198,7 @@ export default function ChatInterface() {
       </div>
 
       {/* Main chat window */}
-      <div className={cn(
-        "flex flex-col h-full",
-        mobileView === 'list' && "hidden md:flex"
-      )}>
+       <div className={cn("flex flex-col h-full", mobileView === 'list' && "hidden md:flex")}>
         {activeConversation ? (
           <>
             <div className="flex items-center gap-4 p-4 border-b bg-background/80 backdrop-blur-lg shrink-0">
