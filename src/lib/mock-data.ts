@@ -65,15 +65,6 @@ export interface Conversation {
   freelancer?: ParticipantInfo;
 }
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  role: 'client' | 'freelancer';
-  createdAt: string;
-  name?: string;
-  avatarUrl?: string;
-}
-
 export interface GigProposal {
   id: string;
   conversationId: string;
@@ -84,6 +75,7 @@ export interface GigProposal {
   price: number;
   status: 'Pending' | 'Accepted' | 'Declined';
   createdAt: string | object;
+  updatedGigId?: string; // To link a proposal to an existing gig for updates
 }
 
 export interface Gig {
@@ -91,10 +83,11 @@ export interface Gig {
   title: string;
   description: string;
   price: number;
-  status: 'In Progress' | 'Completed' | 'Pending';
+  status: 'In Progress' | 'Completed' | 'Pending' | 'Pending Update';
   clientId: string;
   freelancerId: string;
   client?: ParticipantInfo;
   freelancer?: ParticipantInfo;
   createdAt: string;
+  conversationId?: string;
 }

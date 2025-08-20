@@ -306,10 +306,14 @@ export async function updateGigProposalStatus(proposalId: string, status: 'Accep
 
 export async function acceptGig(gigData: Gig) {
     const newGigRef = push(ref(database, 'gigs'));
+    // Find the conversation ID based on client and freelancer
+    const conversation = await findOrCreateConversation(gigData.clientId, gigData.freelancerId);
+
     await set(newGigRef, {
         ...gigData,
         id: newGigRef.key!,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        conversationId: conversation.id,
     });
 }
 
@@ -320,6 +324,7 @@ export async function getGigsForUser(userId: string): Promise<Gig[]> {
     if (snapshot.exists()) {
         snapshot.forEach((child) => {
             const gig = { ...child.val(), id: child.key };
+            // Ensure we only show gigs relevant to the user
             if (gig.freelancerId === userId || gig.clientId === userId) {
                 allGigs.push(gig);
             }
@@ -328,6 +333,10 @@ export async function getGigsForUser(userId: string): Promise<Gig[]> {
     return allGigs.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export { app, auth, database };
+export async function updateGig(gigId: string, data: Partial<Gig>) {
+    const gigRef = ref(database, `gigs/${gigId}`);
+    await update(gigRef, data);
+}
 
-    
+
+export { app, auth, database };

@@ -22,6 +22,7 @@ import { getGigsForUser } from "@/lib/firebase";
 import { Gig } from "@/lib/mock-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
+import { EditGigDialog } from "@/components/edit-gig-dialog";
 
 export default function TasksPage() {
   const { user } = useAuth();
@@ -51,11 +52,16 @@ export default function TasksPage() {
       case 'in progress':
         return 'secondary';
       case 'pending':
+      case 'pending update':
         return 'outline';
       default:
         return 'secondary';
     }
   };
+
+  const handleGigUpdated = (updatedGig: Gig) => {
+    setGigs(prevGigs => prevGigs.map(g => g.id === updatedGig.id ? updatedGig : g));
+  }
 
   return (
     <div>
@@ -78,6 +84,7 @@ export default function TasksPage() {
                     <TableHead>Price</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -88,6 +95,7 @@ export default function TasksPage() {
                       <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                      <TableCell><Skeleton className="h-8 w-16" /></TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -101,6 +109,7 @@ export default function TasksPage() {
                   <TableHead>Price</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -115,10 +124,15 @@ export default function TasksPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{gig.createdAt ? format(new Date(gig.createdAt), 'PP') : '-'}</TableCell>
+                    <TableCell className="text-right">
+                       {gig.status.toLowerCase() === 'in progress' && user?.uid === gig.freelancerId && (
+                         <EditGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
+                       )}
+                    </TableCell>
                   </TableRow>
                 )) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">No gigs found.</TableCell>
+                    <TableCell colSpan={6} className="text-center h-24">No gigs found.</TableCell>
                   </TableRow>
                 )}
               </TableBody>

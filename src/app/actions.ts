@@ -2,8 +2,8 @@
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
-import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus } from '@/lib/firebase';
-import type { Freelancer, PortfolioItem, GigProposal } from '@/lib/mock-data';
+import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus, updateGig } from '@/lib/firebase';
+import type { Freelancer, PortfolioItem, GigProposal, Gig } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
 import { revalidatePath } from 'next/cache';
@@ -100,10 +100,6 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
            await updateFreelancerProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
         }
         
-        // Note: The Firebase Auth user (for header display) will not update immediately.
-        // This requires the Admin SDK, which has been removed due to environment issues.
-        // The user will see the updated info in the header after signing out and back in.
-        
         return { success: true };
     } catch (error) {
         console.error(error);
@@ -138,7 +134,10 @@ export async function sendGigProposal(proposal: Omit<GigProposal, 'id' | 'status
     try {
         const proposalId = await createGigProposal(proposal);
         
-        const messageText = `Gig Proposal: ${proposal.title}`;
+        const messageText = proposal.updatedGigId 
+            ? `Gig Update Proposal: ${proposal.title}`
+            : `Gig Proposal: ${proposal.title}`;
+
         await sendMessage(proposal.conversationId, {
             senderId: proposal.freelancerId,
             text: messageText,
@@ -159,16 +158,27 @@ export async function sendGigProposal(proposal: Omit<GigProposal, 'id' | 'status
 
 export async function acceptGigProposal(proposal: GigProposal) {
     try {
-        const client = await getParticipantData(proposal.clientId);
-        const freelancer = await getParticipantData(proposal.freelancerId);
-        
-        await acceptGig({
-            ...proposal,
-            status: 'In Progress',
-            client,
-            freelancer,
-            createdAt: new Date().toISOString(),
-        });
+        if (proposal.updatedGigId) {
+            // This is an update to an existing gig
+            await updateGig(proposal.updatedGigId, {
+                title: proposal.title,
+                description: proposal.description,
+                price: proposal.price,
+                status: 'In Progress',
+            });
+        } else {
+            // This is a new gig
+            const client = await getParticipantData(proposal.clientId);
+            const freelancer = await getParticipantData(proposal.freelancerId);
+            
+            await acceptGig({
+                ...proposal,
+                status: 'In Progress',
+                client,
+                freelancer,
+                createdAt: new Date().toISOString(),
+            });
+        }
         
         await updateGigProposalStatus(proposal.id, 'Accepted');
         
@@ -186,6 +196,49 @@ export async function acceptGigProposal(proposal: GigProposal) {
         revalidatePath('/dashboard/tasks');
         
         return { success: true };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function handleUpdateGig(gig: Gig, data: {title: string, description: string, price: number}) {
+    try {
+        // If price is unchanged, just update the gig
+        if (gig.price === data.price) {
+            await updateGig(gig.id, {
+                title: data.title,
+                description: data.description,
+            });
+            revalidatePath('/dashboard/tasks');
+            return { success: true, gig: {...gig, ...data} };
+        }
+
+        // If price has changed, create a new proposal for the update
+        const proposal: Omit<GigProposal, 'id' | 'status' | 'createdAt'> = {
+            conversationId: gig.conversationId!,
+            freelancerId: gig.freelancerId,
+            clientId: gig.clientId,
+            title: data.title,
+            description: data.description,
+            price: data.price,
+            updatedGigId: gig.id,
+        }
+
+        const proposalResult = await sendGigProposal(proposal);
+        if (!proposalResult.success) {
+            throw new Error(proposalResult.error);
+        }
+
+        // Mark the original gig as pending update
+        await updateGig(gig.id, { status: 'Pending Update' });
+
+        const updatedGig = { ...gig, status: 'Pending Update' };
+
+        revalidatePath('/dashboard/tasks');
+        return { success: true, gig: updatedGig };
+
     } catch (error) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
