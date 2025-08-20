@@ -42,7 +42,7 @@ export default function FreelancerLayout({
               <span className="">GlobalGigs</span>
             </Link>
           </div>
-          <div className="flex-1">
+          <ScrollArea className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               {navItems.map((item) => (
                 <Link
@@ -58,8 +58,8 @@ export default function FreelancerLayout({
                 </Link>
               ))}
             </nav>
-          </div>
-           <div className="mt-auto p-4">
+          </ScrollArea>
+           <div className="mt-auto p-4 border-t">
              <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
                  <Link
                   href="/dashboard/settings"
