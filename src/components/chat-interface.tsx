@@ -6,11 +6,11 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import type { Conversation, Message, UserProfile, GigProposal } from '@/lib/mock-data';
-import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile, getGigProposalById } from '@/lib/firebase';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import type { Conversation, Message } from '@/lib/mock-data';
+import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
-import { Send, Search, Loader2, ArrowLeft, MessageSquare, Briefcase } from 'lucide-react';
+import { Send, Search, Loader2, ArrowLeft, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth.js';
 import type { Unsubscribe } from 'firebase/database';
@@ -96,7 +96,6 @@ export default function ChatInterface() {
             if (targetConversation) {
                 selectConversation(targetConversation);
             } else if (finalConversations.length > 0 && !searchParams.get('freelancerId')) {
-                // By default select the first conversation if none is specified in the URL
                 selectConversation(finalConversations[0]);
             } else {
                 setMobileView('list');
@@ -223,7 +222,7 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1" ref={viewportRef}>
                 <div className="space-y-6 p-6">
                     {messages.map((message) => {
                     const isProposal = message.metadata?.type === 'gig-proposal';
