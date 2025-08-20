@@ -220,8 +220,8 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1" >
-              <div className="space-y-6 p-6" ref={viewportRef}>
+            <ScrollArea className="flex-1" viewportRef={viewportRef}>
+              <div className="space-y-6 p-6">
                  {messages.map((message) => {
                   const isProposal = message.metadata?.type === 'gig-proposal';
 
