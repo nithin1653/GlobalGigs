@@ -161,7 +161,7 @@ export default function ChatInterface() {
         "flex flex-col border-r h-full",
         mobileView === 'chat' && "hidden md:flex"
         )}>
-        <div className="p-4 border-b">
+        <div className="p-4 border-b shrink-0">
             <h2 className="text-xl font-bold font-headline">Messages</h2>
             <div className="relative mt-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -222,8 +222,8 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1" ref={viewportRef}>
-                <div className="space-y-6 p-6">
+            <ScrollArea className="flex-1">
+                <div className="space-y-6 p-6" ref={viewportRef}>
                     {messages.map((message) => {
                     const isProposal = message.metadata?.type === 'gig-proposal';
 
