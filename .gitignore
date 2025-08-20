@@ -4,7 +4,6 @@
 /node_modules
 /.pnp
 .pnp.js
-.yarn/install-state.gz
 
 # testing
 /coverage
@@ -27,6 +26,7 @@ yarn-error.log*
 pnpm-debug.log*
 
 # local env files
+.env.local
 .env*.local
 
 # vercel
@@ -34,7 +34,12 @@ pnpm-debug.log*
 
 # typescript
 *.tsbuildinfo
-tsconfig.tsbuildinfo
+next-env.d.ts
 
-# cli
-genkit-state.json
+# studio
+.idx
+studio.pb
+.firebase/
+apphosting.yaml
+database.rules.json
+storage.rules
