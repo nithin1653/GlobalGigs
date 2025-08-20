@@ -15,7 +15,7 @@ export default function EditProfilePage() {
     const [activeTab, setActiveTab] = useState<ActiveTab>('public');
 
     return (
-        <div className="container mx-auto max-w-5xl px-4 py-12">
+        <div className="container mx-auto max-w-5xl px-0 py-4 sm:px-4 sm:py-12">
             <div className="mb-8">
                 <h1 className="text-4xl font-bold tracking-tight font-headline">Edit Your Profile</h1>
                 <p className="mt-2 text-lg text-muted-foreground">
