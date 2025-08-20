@@ -1,9 +1,10 @@
+
 'use client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, Briefcase, Users, Search, DollarSign, PenTool } from 'lucide-react';
+import { CheckCircle, Briefcase, Users, Search, IndianRupee, PenTool } from 'lucide-react';
 
 const clientFeatures = [
   {
@@ -25,7 +26,7 @@ const clientFeatures = [
 
 const freelancerFeatures = [
   {
-    icon: <DollarSign className="h-8 w-8 text-primary" />,
+    icon: <IndianRupee className="h-8 w-8 text-primary" />,
     title: 'Find Fulfilling Work',
     description: 'Browse thousands of jobs that match your skills and passion.'
   },

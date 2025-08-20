@@ -85,7 +85,7 @@ export function GigProposalCard({ proposalId, currentUserId }: GigProposalCardPr
             <CardContent className="space-y-4">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{proposal.description}</p>
                 <div className="text-2xl font-bold text-primary">
-                    ${proposal.price}
+                    ₹{proposal.price}
                 </div>
             </CardContent>
             <CardFooter className="flex justify-between items-center bg-muted/50 p-4">

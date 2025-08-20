@@ -108,7 +108,7 @@ export default function TasksPage() {
                   <TableRow key={gig.id}>
                     <TableCell className="font-medium">{gig.title}</TableCell>
                     <TableCell>{gig.client?.name}</TableCell>
-                    <TableCell>${gig.price}</TableCell>
+                    <TableCell>₹{gig.price}</TableCell>
                     <TableCell>
                       <Badge variant={getStatusVariant(gig.status)}>
                         {gig.status}

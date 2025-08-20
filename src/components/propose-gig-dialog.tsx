@@ -108,7 +108,7 @@ export function ProposeGigDialog({ conversation, freelancerId }: ProposeGigDialo
                         <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea {...field} rows={4} /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="price" render={({ field }) => (
-                        <FormItem><FormLabel>Total Price ($)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Total Price (INR)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                 </div>
                 <DialogFooter>

@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Freelancer } from '@/lib/mock-data';
-import { ArrowRight, DollarSign } from 'lucide-react';
+import { ArrowRight, IndianRupee } from 'lucide-react';
 
 interface FreelancerCardProps {
   freelancer: Freelancer;

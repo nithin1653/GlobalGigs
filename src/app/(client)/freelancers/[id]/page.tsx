@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, MessageSquare, CheckCircle, DollarSign, Loader2 } from 'lucide-react';
+import { Globe, MessageSquare, CheckCircle, IndianRupee, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
@@ -79,7 +79,7 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
               <div className="space-y-2 text-left text-sm text-muted-foreground">
                 <div className="flex items-center"><Globe className="w-4 h-4 mr-2 text-primary" /> {freelancer.location}</div>
                 <div className="flex items-center">
-                    <DollarSign className="w-4 h-4 mr-2 text-primary" /> ₹{freelancer.rate}/hr
+                    <IndianRupee className="w-4 h-4 mr-2 text-primary" /> ₹{freelancer.rate}/hr
                 </div>
                 <div className={`flex items-center ${freelancer.availability === 'Unavailable' ? 'text-destructive' : 'text-green-500'}`}>
                     <CheckCircle className="w-4 h-4 mr-2" /> {freelancer.availability}

@@ -31,15 +31,15 @@ import {
 } from 'recharts';
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpRight, DollarSign, Users, Briefcase, MessageSquare } from "lucide-react"
+import { ArrowUpRight, IndianRupee, Users, Briefcase, MessageSquare } from "lucide-react"
 
 const revenueData = [
-  { month: 'Jan', revenue: 4000 },
-  { month: 'Feb', revenue: 3000 },
-  { month: 'Mar', revenue: 5000 },
-  { month: 'Apr', revenue: 4500 },
-  { month: 'May', revenue: 6000 },
-  { month: 'Jun', revenue: 5500 },
+  { month: 'Jan', revenue: 400000 },
+  { month: 'Feb', revenue: 300000 },
+  { month: 'Mar', revenue: 500000 },
+  { month: 'Apr', revenue: 450000 },
+  { month: 'May', revenue: 600000 },
+  { month: 'Jun', revenue: 550000 },
 ];
 
 const profileViewsData = [
@@ -72,10 +72,10 @@ export default function DashboardPage() {
                     <CardTitle className="text-sm font-medium">
                         Total Revenue
                     </CardTitle>
-                    <DollarSign className="text-muted-foreground h-4 w-4"/>
+                    <IndianRupee className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">$45,231.89</div>
+                    <div className="text-2xl font-bold">₹4,523,189</div>
                     <p className="text-xs text-muted-foreground">
                         +20.1% from last month
                     </p>
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                         <LineChart data={revenueData}>
                              <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
+                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
                             <Tooltip
                                 contentStyle={{ 
                                     backgroundColor: 'hsl(var(--background))',
