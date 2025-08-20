@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import type { Conversation, Message, UserProfile, GigProposal } from '@/lib/mock-data';
 import { getConversationsForUser, findOrCreateConversation, sendMessage, subscribeToConversation, getUserProfile, getGigProposalById } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
@@ -95,6 +95,9 @@ export default function ChatInterface() {
             setConversations(finalConversations);
             if (targetConversation) {
                 selectConversation(targetConversation);
+            } else if (finalConversations.length > 0 && !searchParams.get('freelancerId')) {
+                // By default select the first conversation if none is specified in the URL
+                selectConversation(finalConversations[0]);
             } else {
                 setMobileView('list');
             }
@@ -220,52 +223,53 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1" viewportRef={viewportRef}>
-              <div className="space-y-6 p-6">
-                 {messages.map((message) => {
-                  const isProposal = message.metadata?.type === 'gig-proposal';
+            <ScrollArea className="flex-1">
+                <div className="space-y-6 p-6">
+                    {messages.map((message) => {
+                    const isProposal = message.metadata?.type === 'gig-proposal';
 
-                  if (isProposal) {
+                    if (isProposal) {
+                        return (
+                            <GigProposalCard 
+                                key={message.id} 
+                                proposalId={message.metadata.proposalId!} 
+                                currentUserId={user!.uid}
+                            />
+                        );
+                    }
+
                     return (
-                        <GigProposalCard 
-                            key={message.id} 
-                            proposalId={message.metadata.proposalId!} 
-                            currentUserId={user!.uid}
-                        />
-                    );
-                  }
-
-                  return (
-                    <div key={message.id} className={cn(
-                        'flex items-end gap-2',
-                        message.senderId === user?.uid ? 'justify-end' : 'justify-start'
-                      )}>
-                      {message.senderId !== user?.uid && (
-                          <Avatar className="h-8 w-8">
-                              <AvatarImage src={activeConversation.participant.avatarUrl} />
-                              <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                      )}
-                      <div className={cn(
-                          'max-w-xs lg:max-w-md p-3 rounded-2xl',
-                          message.senderId === user?.uid
-                            ? 'bg-primary text-primary-foreground rounded-br-none'
-                            : 'bg-muted rounded-bl-none'
+                        <div key={message.id} className={cn(
+                            'flex items-end gap-2',
+                            message.senderId === user?.uid ? 'justify-end' : 'justify-start'
+                        )}>
+                        {message.senderId !== user?.uid && (
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={activeConversation.participant.avatarUrl} />
+                                <AvatarFallback>{activeConversation.participant.name?.charAt(0)}</AvatarFallback>
+                            </Avatar>
                         )}
-                      >
-                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
-                      </div>
-                    </div>
-                  );
-                })}
+                        <div className={cn(
+                            'max-w-xs lg:max-w-md p-3 rounded-2xl',
+                            message.senderId === user?.uid
+                                ? 'bg-primary text-primary-foreground rounded-br-none'
+                                : 'bg-muted rounded-bl-none'
+                            )}
+                        >
+                            <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                        </div>
+                        </div>
+                    );
+                    })}
 
-                 {isLoading && messages.length === 0 && (
-                    <div className="flex justify-center py-4">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                    </div>
-                 )}
-              </div>
+                    {isLoading && messages.length === 0 && (
+                        <div className="flex justify-center py-4">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                        </div>
+                    )}
+                </div>
             </ScrollArea>
+
 
             <div className="p-4 border-t bg-background/80 backdrop-blur-lg shrink-0">
               <form onSubmit={handleSendMessage} className="flex items-center gap-4">
