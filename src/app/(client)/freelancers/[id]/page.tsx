@@ -1,7 +1,7 @@
 
 'use client';
 import { useState, useEffect, use } from 'react';
-import { getFreelancerById } from '@/lib/firebase';
+import { getFreelancerById, recordProfileView } from '@/lib/firebase';
 import type { Freelancer } from '@/lib/mock-data';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -31,6 +31,8 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
         } else {
           // Ensure uid is set for existing freelancers
           setFreelancer({ ...fetchedFreelancer, uid: id });
+          // Record the profile view - fire and forget
+          recordProfileView(id);
         }
       } catch (error) {
         console.error("Error loading freelancer data", error);

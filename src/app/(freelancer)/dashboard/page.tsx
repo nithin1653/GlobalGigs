@@ -34,8 +34,8 @@ import { Button } from "@/components/ui/button"
 import { IndianRupee, Users, Briefcase, MessageSquare } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState, useMemo } from "react";
-import { getGigsForUser } from "@/lib/firebase";
-import { Gig } from "@/lib/mock-data";
+import { getGigsForUser, getFreelancerById } from "@/lib/firebase";
+import { Gig, Freelancer } from "@/lib/mock-data";
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -46,22 +46,29 @@ const profileViewsData: any[] = [];
 export default function DashboardPage() {
     const { user } = useAuth();
     const [gigs, setGigs] = useState<Gig[]>([]);
+    const [freelancerProfile, setFreelancerProfile] = useState<Freelancer | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        async function loadGigs() {
+        async function loadData() {
             if (!user) return;
             setIsLoading(true);
             try {
-                const userGigs = await getGigsForUser(user.uid);
+                const [userGigs, profile] = await Promise.all([
+                    getGigsForUser(user.uid),
+                    getFreelancerById(user.uid)
+                ]);
                 setGigs(userGigs);
+                if (profile) {
+                    setFreelancerProfile(profile);
+                }
             } catch (error) {
-                console.error("Failed to load gigs", error);
+                console.error("Failed to load dashboard data", error);
             } finally {
                 setIsLoading(false);
             }
         }
-        loadGigs();
+        loadData();
     }, [user]);
 
     const stats = useMemo(() => {
@@ -71,8 +78,10 @@ export default function DashboardPage() {
 
         const activeGigs = gigs.filter(gig => gig.status.toLowerCase() === 'in progress').length;
         
-        return { totalRevenue, activeGigs };
-    }, [gigs]);
+        const profileViews = freelancerProfile?.viewCount || 0;
+
+        return { totalRevenue, activeGigs, profileViews };
+    }, [gigs, freelancerProfile]);
 
     const recentActivities = useMemo(() => {
         return gigs
@@ -173,9 +182,9 @@ export default function DashboardPage() {
                      <Users className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">0</div>
+                    <div className="text-2xl font-bold">{stats.profileViews}</div>
                     <p className="text-xs text-muted-foreground">
-                        No profile views yet
+                        Total profile views
                     </p>
                 </CardContent>
             </Card>

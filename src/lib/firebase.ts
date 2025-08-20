@@ -1,8 +1,7 @@
-
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild, push, serverTimestamp, onValue, Unsubscribe } from "firebase/database";
+import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild, push, serverTimestamp, onValue, Unsubscribe, increment } from "firebase/database";
 import type { Freelancer, Conversation, UserProfile, Message, Gig, GigProposal } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
@@ -53,6 +52,7 @@ export async function createUserProfile(uid: string, data: { email: string, name
                         avatarUrl: 'https://placehold.co/128x128.png',
                         portfolio: [],
                         experience: [],
+                        viewCount: 0,
                     });
                     console.log(`[Firebase] Created initial freelancer profile for UID: ${uid}`);
                 }
@@ -129,6 +129,19 @@ export async function updateFreelancerProfile(uid: string, data: Partial<Omit<Fr
     } catch (error) {
         console.error(`[Firebase] Error updating freelancer profile for UID ${uid}:`, error);
         throw error;
+    }
+}
+
+export async function recordProfileView(freelancerId: string) {
+    try {
+        const freelancerRef = ref(database, `freelancers/${freelancerId}`);
+        await update(freelancerRef, {
+            viewCount: increment(1)
+        });
+        console.log(`[Firebase] Recorded profile view for UID: ${freelancerId}`);
+    } catch (error) {
+        console.error(`[Firebase] Error recording profile view for UID ${freelancerId}:`, error);
+        // Don't throw error to the client, just log it.
     }
 }
 
@@ -318,20 +331,24 @@ export async function acceptGig(gigData: Gig) {
 }
 
 export async function getGigsForUser(userId: string): Promise<Gig[]> {
-    const gigsRef = ref(database, 'gigs');
-    const snapshot = await get(gigsRef);
-    const allGigs: Gig[] = [];
-    if (snapshot.exists()) {
-        snapshot.forEach((child) => {
-            const gig = { ...child.val(), id: child.key };
-            // Ensure we only show gigs relevant to the user
-            if (gig.freelancerId === userId || gig.clientId === userId) {
-                allGigs.push(gig);
-            }
-        });
-    }
-    return allGigs.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const gigsRef = ref(database, 'gigs');
+  const snapshot = await get(gigsRef);
+  const allGigs: Gig[] = [];
+  if (snapshot.exists()) {
+    snapshot.forEach((child) => {
+      const gig = { ...child.val(), id: child.key };
+      // Ensure we only show gigs relevant to the user
+      if (gig.freelancerId === userId || gig.clientId === userId) {
+        allGigs.push(gig);
+      }
+    });
+  }
+  return allGigs.sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 }
+
 
 export async function updateGig(gigId: string, data: Partial<Gig>) {
     const gigRef = ref(database, `gigs/${gigId}`);

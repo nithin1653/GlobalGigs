@@ -31,6 +31,7 @@ export interface Freelancer {
   avatarUrl: string;
   portfolio: PortfolioItem[];
   experience: Experience[];
+  viewCount?: number;
 }
 
 export interface Message {
