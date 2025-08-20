@@ -1,6 +1,12 @@
 {
   "rules": {
-    ".read": "true",
-    ".write": "true"
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "gigs": {
+      ".indexOn": ["freelancerId", "clientId"]
+    },
+    "conversations": {
+      ".indexOn": ["freelancerUserId", "clientUserId"]
+    }
   }
 }
