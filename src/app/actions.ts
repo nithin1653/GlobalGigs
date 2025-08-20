@@ -6,8 +6,6 @@ import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigPr
 import type { Freelancer, PortfolioItem, GigProposal } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
-import { getAuth } from 'firebase-admin/auth';
-import { adminApp } from '@/lib/firebase-admin'; // We need to create this file
 import { revalidatePath } from 'next/cache';
 
 cloudinary.config({
@@ -96,20 +94,15 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
 
         // Update the core user profile in Realtime DB
         await updateUserProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
-
-        // Update Firebase Auth user
-        const auth = getAuth(adminApp);
-        await auth.updateUser(uid, {
-            displayName: data.name,
-            photoURL: data.avatarUrl,
-        });
-
+        
         // If the user is a freelancer, also update their public freelancer profile
-        if (userProfile?.role === 'freelancer' && data.avatarUrl) {
-            await updateFreelancerProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
-        } else if (userProfile?.role === 'freelancer') {
-            await updateFreelancerProfile(uid, { name: data.name });
+        if (userProfile?.role === 'freelancer') {
+           await updateFreelancerProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
         }
+        
+        // Note: The Firebase Auth user (for header display) will not update immediately.
+        // This requires the Admin SDK, which has been removed due to environment issues.
+        // The user will see the updated info in the header after signing out and back in.
         
         return { success: true };
     } catch (error) {
