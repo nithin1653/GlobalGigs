@@ -145,7 +145,7 @@ export default function ChatInterface() {
   
   if (isLoading && conversations.length === 0 && !activeConversation) {
     return (
-      <div className="flex h-full border-t bg-background/60 items-center justify-center">
+      <div className="flex h-full bg-background/60 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
           <p className="ml-2">Loading chats...</p>
       </div>
@@ -220,7 +220,7 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1" ref={viewportRef}>
+            <ScrollArea className="flex-1" viewportRef={viewportRef}>
               <div className="space-y-6 p-6">
                  {messages.map((message) => {
                   const isProposal = message.metadata?.type === 'gig-proposal';
