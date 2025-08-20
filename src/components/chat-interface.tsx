@@ -21,11 +21,11 @@ export default function ChatInterface() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
 
-  
   const { user, userProfile } = useAuth();
   const searchParams = useSearchParams();
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -97,6 +97,7 @@ export default function ChatInterface() {
             } else if (finalConversations.length > 0 && !searchParams.get('freelancerId')) {
                 selectConversation(finalConversations[0]);
             } else {
+                setIsLoading(false);
                 setMobileView('list');
             }
         }
@@ -105,7 +106,7 @@ export default function ChatInterface() {
         console.error("[Chat] Failed to fetch conversations", error);
       } finally {
         if (isMounted) {
-            setIsLoading(false);
+            // setIsLoading(false); // isLoading is handled inside selectConversation
         }
       }
     }
@@ -192,7 +193,7 @@ export default function ChatInterface() {
               </div>
             </button>
           ))}
-           {conversations.length === 0 && !isLoading && (
+           {(conversations.length === 0 && !isLoading) && (
             <div className="p-4 text-center text-sm text-muted-foreground">
               No conversations yet.
             </div>
@@ -260,7 +261,7 @@ export default function ChatInterface() {
                     );
                     })}
 
-                    {isLoading && messages.length === 0 && (
+                    {(isLoading && messages.length === 0) && (
                         <div className="flex justify-center py-4">
                             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                         </div>
@@ -303,3 +304,5 @@ export default function ChatInterface() {
     </div>
   );
 }
+
+    
