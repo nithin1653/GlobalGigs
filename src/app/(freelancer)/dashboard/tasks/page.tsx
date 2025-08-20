@@ -23,6 +23,7 @@ import { Gig } from "@/lib/mock-data";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
 import { EditGigDialog } from "@/components/edit-gig-dialog";
+import { CompleteGigDialog } from "@/components/complete-gig-dialog";
 
 export default function TasksPage() {
   const { user } = useAuth();
@@ -124,9 +125,12 @@ export default function TasksPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{gig.createdAt ? format(new Date(gig.createdAt), 'PP') : '-'}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right space-x-2">
                        {gig.status.toLowerCase() === 'in progress' && user?.uid === gig.freelancerId && (
-                         <EditGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
+                         <>
+                           <CompleteGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
+                           <EditGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
+                         </>
                        )}
                     </TableCell>
                   </TableRow>

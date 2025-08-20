@@ -245,3 +245,26 @@ export async function handleUpdateGig(gig: Gig, data: {title: string, descriptio
         return { success: false, error: errorMessage };
     }
 }
+
+export async function handleCompleteGig(gig: Gig) {
+    try {
+        await updateGig(gig.id, { status: 'Completed' });
+
+        if (gig.conversationId) {
+            await sendMessage(gig.conversationId, {
+                senderId: gig.freelancerId,
+                text: `I have marked the gig "${gig.title}" as complete. Please let me know if you have any feedback!`,
+                timestamp: new Date(),
+            });
+        }
+        
+        revalidatePath('/dashboard/tasks');
+        const updatedGig = { ...gig, status: 'Completed' };
+        return { success: true, gig: updatedGig };
+
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
+    }
+}
