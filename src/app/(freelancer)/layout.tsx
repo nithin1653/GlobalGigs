@@ -85,7 +85,7 @@ export default function FreelancerLayout({
             </Link>
         </header>
 
-        <main className="flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background overflow-y-auto">
+        <main className="flex-1 flex flex-col gap-4 p-0 lg:gap-6 lg:p-6 bg-background overflow-hidden">
             {children}
         </main>
         
