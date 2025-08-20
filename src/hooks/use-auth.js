@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useContext, createContext } from 'react';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
@@ -18,7 +19,10 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setUser(user);
+        // Force refresh of the user token to get updated profile info
+        await user.reload();
+        const refreshedUser = auth.currentUser;
+        setUser(refreshedUser);
         const profile = await getUserProfile(user.uid);
         // --- Development Role Override ---
         if (process.env.NODE_ENV === 'development' && devRole && profile) {

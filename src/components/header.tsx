@@ -32,6 +32,7 @@ export default function Header() {
   };
 
   const isFreelancer = userProfile?.role === 'freelancer';
+  const avatarUrl = user?.photoURL || userProfile?.avatarUrl;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/60 backdrop-blur-xl">
@@ -65,7 +66,7 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.photoURL || "https://placehold.co/32x32.png"} alt="User Avatar" />
+                    <AvatarImage src={avatarUrl} alt="User Avatar" />
                     <AvatarFallback>{user?.email?.[0]?.toUpperCase() ?? <User />}</AvatarFallback>
                   </Avatar>
                 </Button>

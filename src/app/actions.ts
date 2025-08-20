@@ -6,6 +6,8 @@ import { updateFreelancerProfile, updateUserProfile, getUserProfile } from '@/li
 import type { Freelancer, PortfolioItem } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
+import { getAuth } from 'firebase-admin/auth';
+import { adminApp } from '@/lib/firebase-admin'; // We need to create this file
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -91,8 +93,15 @@ export async function handleUpdateUser(uid: string, data: {name: string, avatarU
     try {
         const userProfile = await getUserProfile(uid);
 
-        // Update the core user profile
+        // Update the core user profile in Realtime DB
         await updateUserProfile(uid, { name: data.name, avatarUrl: data.avatarUrl });
+
+        // Update Firebase Auth user
+        const auth = getAuth(adminApp);
+        await auth.updateUser(uid, {
+            displayName: data.name,
+            photoURL: data.avatarUrl,
+        });
 
         // If the user is a freelancer, also update their public freelancer profile
         if (userProfile?.role === 'freelancer') {
