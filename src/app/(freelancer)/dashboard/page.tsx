@@ -33,30 +33,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ArrowUpRight, IndianRupee, Users, Briefcase, MessageSquare } from "lucide-react"
 
-const revenueData = [
-  { month: 'Jan', revenue: 400000 },
-  { month: 'Feb', revenue: 300000 },
-  { month: 'Mar', revenue: 500000 },
-  { month: 'Apr', revenue: 450000 },
-  { month: 'May', revenue: 600000 },
-  { month: 'Jun', revenue: 550000 },
-];
-
-const profileViewsData = [
-  { month: 'Jan', views: 1200 },
-  { month: 'Feb', views: 1800 },
-  { month: 'Mar', views: 2200 },
-  { month: 'Apr', views: 2500 },
-  { month: 'May', views: 3100 },
-  { month: 'Jun', views: 4200 },
-];
-
-const recentActivities = [
-    { type: 'message', from: 'Client Inc.', content: 'Can you start on Monday?', time: '5m ago' },
-    { type: 'gig', from: 'Innovate LLC', content: 'New gig: "React Native App"', time: '1h ago' },
-    { type: 'payment', from: 'Startup Co.', content: 'Payment received for "Logo Design"', time: '3h ago' },
-    { type: 'review', from: 'MegaCorp', content: 'You received a 5-star review!', time: '1d ago' },
-]
+const revenueData: any[] = [];
+const profileViewsData: any[] = [];
+const recentActivities: any[] = [];
 
 
 export default function DashboardPage() {
@@ -75,9 +54,9 @@ export default function DashboardPage() {
                     <IndianRupee className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">₹4,523,189</div>
+                    <div className="text-2xl font-bold">₹0</div>
                     <p className="text-xs text-muted-foreground">
-                        +20.1% from last month
+                        No revenue data yet
                     </p>
                 </CardContent>
             </Card>
@@ -89,9 +68,9 @@ export default function DashboardPage() {
                      <Briefcase className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">+5</div>
+                    <div className="text-2xl font-bold">0</div>
                     <p className="text-xs text-muted-foreground">
-                        +2 since last week
+                        No active gigs
                     </p>
                 </CardContent>
             </Card>
@@ -101,9 +80,9 @@ export default function DashboardPage() {
                      <Users className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">+2350</div>
+                    <div className="text-2xl font-bold">0</div>
                     <p className="text-xs text-muted-foreground">
-                        +180.1% from last month
+                        No profile views yet
                     </p>
                 </CardContent>
             </Card>
@@ -113,9 +92,9 @@ export default function DashboardPage() {
                      <MessageSquare className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">+12</div>
+                    <div className="text-2xl font-bold">0</div>
                     <p className="text-xs text-muted-foreground">
-                        3 unread
+                        No new messages
                     </p>
                 </CardContent>
             </Card>
@@ -128,20 +107,26 @@ export default function DashboardPage() {
                     <CardDescription>Your monthly earnings for the last 6 months.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={revenueData}>
-                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                            <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
-                            <Tooltip
-                                contentStyle={{ 
-                                    backgroundColor: 'hsl(var(--background))',
-                                    border: '1px solid hsl(var(--border))'
-                                }}
-                            />
-                            <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{r: 4, fill: 'hsl(var(--primary))'}} activeDot={{ r: 8 }}/>
-                        </LineChart>
-                    </ResponsiveContainer>
+                    {revenueData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <LineChart data={revenueData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                                <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `₹${value/1000}k`} />
+                                <Tooltip
+                                    contentStyle={{ 
+                                        backgroundColor: 'hsl(var(--background))',
+                                        border: '1px solid hsl(var(--border))'
+                                    }}
+                                />
+                                <Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} dot={{r: 4, fill: 'hsl(var(--primary))'}} activeDot={{ r: 8 }}/>
+                            </LineChart>
+                        </ResponsiveContainer>
+                    ) : (
+                        <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                            <p>No revenue data available.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
             <Card>
@@ -150,21 +135,27 @@ export default function DashboardPage() {
                     <CardDescription>How many times your profile has been viewed.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <BarChart data={profileViewsData}>
-                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="month" tickLine={false} axisLine={false} />
-                            <YAxis tickLine={false} axisLine={false} />
-                            <Tooltip
-                                cursor={{fill: 'hsl(var(--muted))'}}
-                                contentStyle={{ 
-                                    backgroundColor: 'hsl(var(--background))',
-                                    border: '1px solid hsl(var(--border))'
-                                }}
-                            />
-                            <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                     {profileViewsData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={profileViewsData}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                                <YAxis tickLine={false} axisLine={false} />
+                                <Tooltip
+                                    cursor={{fill: 'hsl(var(--muted))'}}
+                                    contentStyle={{ 
+                                        backgroundColor: 'hsl(var(--background))',
+                                        border: '1px solid hsl(var(--border))'
+                                    }}
+                                />
+                                <Bar dataKey="views" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                     ) : (
+                        <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                            <p>No profile view data available.</p>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
         </div>
@@ -175,28 +166,34 @@ export default function DashboardPage() {
                 <CardDescription>Latest updates on your gigs and messages.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Type</TableHead>
-                            <TableHead>From</TableHead>
-                            <TableHead>Details</TableHead>
-                            <TableHead className="text-right">Time</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {recentActivities.map((activity, index) => (
-                            <TableRow key={index}>
-                                <TableCell>
-                                    <Badge variant={activity.type === 'payment' ? 'default' : 'secondary'}>{activity.type}</Badge>
-                                </TableCell>
-                                <TableCell className="font-medium">{activity.from}</TableCell>
-                                <TableCell>{activity.content}</TableCell>
-                                <TableCell className="text-right text-muted-foreground">{activity.time}</TableCell>
+                 {recentActivities.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Type</TableHead>
+                                <TableHead>From</TableHead>
+                                <TableHead>Details</TableHead>
+                                <TableHead className="text-right">Time</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {recentActivities.map((activity, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>
+                                        <Badge variant={activity.type === 'payment' ? 'default' : 'secondary'}>{activity.type}</Badge>
+                                    </TableCell>
+                                    <TableCell className="font-medium">{activity.from}</TableCell>
+                                    <TableCell>{activity.content}</TableCell>
+                                    <TableCell className="text-right text-muted-foreground">{activity.time}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <div className="text-center py-16 text-muted-foreground">
+                        <p>No recent activity.</p>
+                    </div>
+                )}
             </CardContent>
              <CardFooter className="flex justify-end">
                 <Button variant="outline" size="sm">View All Activity</Button>

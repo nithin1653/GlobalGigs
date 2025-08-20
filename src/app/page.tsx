@@ -43,21 +43,6 @@ const freelancerFeatures = [
   }
 ];
 
-const testimonials = [
-    {
-        quote: "GlobalGigs made it incredibly easy to find a talented developer. The platform is intuitive and the quality of freelancers is top-notch.",
-        name: "Alex Johnson",
-        role: "Startup Founder",
-        avatar: "https://placehold.co/48x48.png"
-    },
-    {
-        quote: "As a freelance designer, GlobalGigs has been a game-changer for me. I've found amazing projects and clients from all over the world.",
-        name: "Maria Garcia",
-        role: "UX/UI Designer",
-        avatar: "https://placehold.co/48x48.png"
-    }
-];
-
 
 export default function HomePage() {
   return (
@@ -146,32 +131,6 @@ export default function HomePage() {
                 </Button>
             </div>
           </div>
-        </section>
-
-        {/* Testimonials Section */}
-        <section className="py-16 md:py-24">
-            <div className="container mx-auto px-4">
-                <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 font-headline">Loved by People Across the Globe</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {testimonials.map((testimonial, index) => (
-                        <Card key={index} className="bg-card/50">
-                            <CardContent className="pt-6">
-                                <p className="italic text-muted-foreground">"{testimonial.quote}"</p>
-                            </CardContent>
-                            <CardFooter className="flex items-center gap-4">
-                                <Avatar>
-                                    <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                                    <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{testimonial.name}</p>
-                                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                                </div>
-                            </CardFooter>
-                        </Card>
-                    ))}
-                </div>
-            </div>
         </section>
 
         {/* CTA Section */}

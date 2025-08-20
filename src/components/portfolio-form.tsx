@@ -113,14 +113,7 @@ export default function PortfolioForm({ userId }: PortfolioFormProps) {
                 }));
                 form.reset({ portfolio: portfolioWithTechString });
             } else {
-                form.reset({ portfolio: [
-                     {
-                        title: 'Modern Website Design',
-                        description: 'A sleek and responsive design for a tech startup.',
-                        imageUrls: ['https://placehold.co/600x400.png'],
-                        technologiesUsed: 'React, Next.js, TailwindCSS',
-                    },
-                ] });
+                form.reset({ portfolio: [] });
             }
         } catch (error) {
             console.error("Failed to fetch portfolio", error);
