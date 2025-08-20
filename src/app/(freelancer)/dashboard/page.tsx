@@ -38,6 +38,7 @@ import { getGigsForUser, getFreelancerById } from "@/lib/firebase";
 import { Gig, Freelancer } from "@/lib/mock-data";
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 const revenueData: any[] = [];
 const profileViewsData: any[] = [];
@@ -190,13 +191,15 @@ export default function DashboardPage() {
             </Card>
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">New Messages</CardTitle>
+                    <CardTitle className="text-sm font-medium">Inbox</CardTitle>
                      <MessageSquare className="text-muted-foreground h-4 w-4"/>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">0</div>
-                    <p className="text-xs text-muted-foreground">
-                        No new messages
+                    <div className="text-2xl font-bold">Check Inbox</div>
+                     <p className="text-xs text-muted-foreground">
+                        <Link href="/dashboard/messages" className="underline">
+                            View your conversations
+                        </Link>
                     </p>
                 </CardContent>
             </Card>
@@ -320,3 +323,5 @@ function CardSkeleton() {
         </Card>
     )
 }
+
+    
