@@ -10,15 +10,11 @@ if (!serviceAccountString) {
 try {
     const serviceAccount = JSON.parse(serviceAccountString);
 
-    let adminApp: admin.app.App;
-
     if (!admin.apps.length) {
-      adminApp = admin.initializeApp({
+      admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         databaseURL: "https://globalgigs-default-rtdb.firebaseio.com",
       });
-    } else {
-      adminApp = admin.app();
     }
     
 } catch (e: any) {
