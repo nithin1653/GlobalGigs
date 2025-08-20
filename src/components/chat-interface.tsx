@@ -39,9 +39,7 @@ export default function ChatInterface() {
   }, []);
 
   const selectConversation = useCallback((conv: Conversation | null) => {
-    console.log('[Chat] Selecting conversation:', conv?.id);
     if (conversationSubscription.current) {
-        console.log('[Chat] Unsubscribing from previous conversation.');
         conversationSubscription.current();
         conversationSubscription.current = null;
     }
@@ -50,9 +48,7 @@ export default function ChatInterface() {
         setIsLoading(true);
         setMessages([]);
         setMobileView('chat');
-        console.log('[Chat] Subscribing to conversation:', conv.id);
         conversationSubscription.current = subscribeToConversation(conv.id, (newMessages) => {
-            console.log(`[Chat] Received ${newMessages.length} messages for conversation ${conv.id}`);
             setMessages(newMessages);
             setIsLoading(false);
             setTimeout(scrollToBottom, 100); 
@@ -66,48 +62,33 @@ export default function ChatInterface() {
   useEffect(() => {
     let isMounted = true;
     async function loadInitialData() {
-      console.log('[Chat] useEffect triggered. User:', user, 'Profile:', userProfile);
       if (!user || !userProfile) {
-        console.log('[Chat] Waiting for user and profile...');
         return;
       }
       
       setIsLoading(true);
-      console.log(`[Chat] Loading initial data for user ${user.uid} with role ${userProfile.role}`);
       try {
         const convs = await getConversationsForUser(user.uid, userProfile.role);
         if (!isMounted) return;
-        console.log(`[Chat] Fetched ${convs.length} conversations.`);
         
         const freelancerId = searchParams.get('freelancerId');
-        console.log(`[Chat] freelancerId from URL: ${freelancerId}`);
         
         let targetConversation: Conversation | null = null;
         let finalConversations = [...convs];
 
         if (freelancerId && userProfile.role === 'client') {
-            console.log(`[Chat] Client is contacting freelancer: ${freelancerId}`);
             const conversation = await findOrCreateConversation(user.uid, freelancerId);
             if (!isMounted) return;
-            console.log('[Chat] Found or created conversation:', conversation.id);
 
             const existingConvIndex = finalConversations.findIndex(c => c.id === conversation.id);
             if (existingConvIndex === -1) {
-                console.log('[Chat] New conversation, adding to the top of the list.');
                 finalConversations = [conversation, ...finalConversations];
             } else {
-                console.log('[Chat] Existing conversation, updating participant data and moving to top.');
                 const existingConv = { ...finalConversations[existingConvIndex], participant: conversation.participant };
                 finalConversations.splice(existingConvIndex, 1);
                 finalConversations.unshift(existingConv);
             }
             targetConversation = conversation;
-        } else if (finalConversations.length > 0) {
-            console.log('[Chat] No specific freelancer targeted, selecting the first conversation.');
-            // Don't auto-select a conversation unless one is explicitly chosen via URL
-            // targetConversation = finalConversations[0];
-        } else {
-             console.log('[Chat] No conversations found and no freelancer targeted.');
         }
 
         if (isMounted) {
@@ -123,7 +104,6 @@ export default function ChatInterface() {
         console.error("[Chat] Failed to fetch conversations", error);
       } finally {
         if (isMounted) {
-            console.log('[Chat] Finished loading initial data.');
             setIsLoading(false);
         }
       }
@@ -131,7 +111,6 @@ export default function ChatInterface() {
     loadInitialData();
 
     return () => {
-        console.log('[Chat] Component unmounting, cleaning up subscription.');
         isMounted = false;
         if (conversationSubscription.current) {
             conversationSubscription.current();
@@ -147,7 +126,6 @@ export default function ChatInterface() {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversation || !user) return;
 
-    console.log(`[Chat] Sending message to conversation ${activeConversation.id}`);
     setIsSending(true);
     const message: Omit<Message, 'id'> = {
       senderId: user.uid,
@@ -158,7 +136,6 @@ export default function ChatInterface() {
     try {
         await sendMessage(activeConversation.id, message);
         setNewMessage('');
-        console.log('[Chat] Message sent successfully.');
     } catch (error) {
         console.error("[Chat] Error sending message", error);
     } finally {
@@ -176,11 +153,11 @@ export default function ChatInterface() {
   }
 
   return (
-    <div className="flex h-full bg-background/60">
+    <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] lg:grid-cols-[384px_1fr] h-full">
       {/* Sidebar with conversations */}
       <div className={cn(
-        "w-full md:w-80 lg:w-96 flex flex-col border-r transition-transform duration-300",
-        mobileView === 'chat' ? "max-md:-translate-x-full" : "max-md:translate-x-0"
+        "flex flex-col border-r h-full",
+        mobileView === 'chat' && "hidden md:flex"
         )}>
         <div className="p-4 border-b">
             <h2 className="text-xl font-bold font-headline">Messages</h2>
@@ -224,8 +201,8 @@ export default function ChatInterface() {
 
       {/* Main chat window */}
       <div className={cn(
-        "flex-1 flex flex-col absolute md:static inset-0 bg-background transition-transform duration-300",
-        mobileView === 'chat' ? "translate-x-0" : "max-md:translate-x-full"
+        "flex flex-col h-full",
+        mobileView === 'list' && "hidden md:flex"
       )}>
         {activeConversation ? (
           <>
@@ -243,7 +220,7 @@ export default function ChatInterface() {
               </div>
             </div>
             
-            <ScrollArea className="flex-1" viewportRef={viewportRef}>
+            <ScrollArea className="flex-1" ref={viewportRef}>
               <div className="space-y-6 p-6">
                  {messages.map((message) => {
                   const isProposal = message.metadata?.type === 'gig-proposal';
@@ -324,5 +301,3 @@ export default function ChatInterface() {
     </div>
   );
 }
-
-    
