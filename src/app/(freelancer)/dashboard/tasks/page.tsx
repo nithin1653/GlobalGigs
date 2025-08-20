@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from 'date-fns';
 import { EditGigDialog } from "@/components/edit-gig-dialog";
 import { CompleteGigDialog } from "@/components/complete-gig-dialog";
+import { CancelGigDialog } from "@/components/cancel-gig-dialog";
 
 export default function TasksPage() {
   const { user } = useAuth();
@@ -52,6 +53,8 @@ export default function TasksPage() {
         return 'default';
       case 'in progress':
         return 'secondary';
+      case 'cancelled':
+        return 'destructive';
       case 'pending':
       case 'pending update':
         return 'outline';
@@ -130,6 +133,7 @@ export default function TasksPage() {
                          <>
                            <CompleteGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
                            <EditGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
+                           <CancelGigDialog gig={gig} onGigUpdated={handleGigUpdated} />
                          </>
                        )}
                     </TableCell>

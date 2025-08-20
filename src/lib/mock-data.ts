@@ -83,7 +83,7 @@ export interface Gig {
   title: string;
   description: string;
   price: number;
-  status: 'In Progress' | 'Completed' | 'Pending' | 'Pending Update';
+  status: 'In Progress' | 'Completed' | 'Pending' | 'Pending Update' | 'Cancelled';
   clientId: string;
   freelancerId: string;
   client?: ParticipantInfo;
