@@ -59,7 +59,7 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
   }
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-12">
+    <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Left Column (Sticky) */}
         <div className="md:col-span-1 md:sticky top-24 self-start">
