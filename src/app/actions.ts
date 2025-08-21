@@ -2,8 +2,8 @@
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
-import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus, updateGig } from '@/lib/firebase';
-import type { Freelancer, PortfolioItem, GigProposal, Gig } from '@/lib/mock-data';
+import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus, updateGig, addReviewForFreelancer } from '@/lib/firebase';
+import type { Freelancer, PortfolioItem, GigProposal, Gig, Review } from '@/lib/mock-data';
 import { z } from 'zod';
 import { v2 as cloudinary } from 'cloudinary';
 import { revalidatePath } from 'next/cache';
@@ -285,6 +285,19 @@ export async function handleCancelGig(gig: Gig) {
         const updatedGig = { ...gig, status: 'Cancelled' };
         return { success: true, gig: updatedGig };
 
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return { success: false, error: errorMessage };
+    }
+}
+
+export async function handleSubmitReview(reviewData: Omit<Review, 'id' | 'createdAt'>) {
+    try {
+        await addReviewForFreelancer(reviewData);
+        revalidatePath(`/freelancers/${reviewData.freelancerId}`);
+        revalidatePath('/discover');
+        return { success: true };
     } catch (error) {
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';

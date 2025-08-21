@@ -1,5 +1,4 @@
 
-
 export interface PortfolioItem {
   id: number;
   title: string;
@@ -17,6 +16,17 @@ export interface Experience {
   description: string;
 }
 
+export interface Review {
+    id: string;
+    clientId: string;
+    clientName: string;
+    clientAvatarUrl?: string;
+    freelancerId: string;
+    rating: number;
+    comment: string;
+    createdAt: string | object;
+}
+
 export interface Freelancer {
   id:string;
   uid?: string; // Add uid to link to auth user
@@ -32,6 +42,9 @@ export interface Freelancer {
   portfolio: PortfolioItem[];
   experience: Experience[];
   viewCount?: number;
+  // New review fields
+  reviewCount?: number;
+  averageRating?: number;
 }
 
 export interface Message {

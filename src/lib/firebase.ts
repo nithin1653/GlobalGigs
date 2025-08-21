@@ -1,8 +1,9 @@
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase, ref, get, child, set, update, query, equalTo, orderByChild, push, serverTimestamp, onValue, Unsubscribe, increment } from "firebase/database";
-import type { Freelancer, Conversation, UserProfile, Message, Gig, GigProposal } from '@/lib/mock-data';
+import type { Freelancer, Conversation, UserProfile, Message, Gig, GigProposal, Review } from '@/lib/mock-data';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -53,6 +54,8 @@ export async function createUserProfile(uid: string, data: { email: string, name
                         portfolio: [],
                         experience: [],
                         viewCount: 0,
+                        reviewCount: 0,
+                        averageRating: 0,
                     });
                     console.log(`[Firebase] Created initial freelancer profile for UID: ${uid}`);
                 }
@@ -353,6 +356,47 @@ export async function getGigsForUser(userId: string): Promise<Gig[]> {
 export async function updateGig(gigId: string, data: Partial<Gig>) {
     const gigRef = ref(database, `gigs/${gigId}`);
     await update(gigRef, data);
+}
+
+// Review Functions
+export async function addReviewForFreelancer(reviewData: Omit<Review, 'id' | 'createdAt'>) {
+    const freelancerRef = ref(database, `freelancers/${reviewData.freelancerId}`);
+    const freelancerSnapshot = await get(freelancerRef);
+
+    if (!freelancerSnapshot.exists()) {
+        throw new Error("Freelancer not found");
+    }
+
+    // Add the new review
+    const reviewsRef = ref(database, 'reviews');
+    const newReviewRef = push(reviewsRef);
+    await set(newReviewRef, { ...reviewData, createdAt: serverTimestamp() });
+
+    // Update the freelancer's average rating and review count
+    const freelancer = freelancerSnapshot.val() as Freelancer;
+    const currentTotalRating = (freelancer.averageRating || 0) * (freelancer.reviewCount || 0);
+    const newReviewCount = (freelancer.reviewCount || 0) + 1;
+    const newAverageRating = (currentTotalRating + reviewData.rating) / newReviewCount;
+
+    await update(freelancerRef, {
+        reviewCount: newReviewCount,
+        averageRating: newAverageRating
+    });
+}
+
+export async function getReviewsForFreelancer(freelancerId: string): Promise<Review[]> {
+    const reviewsRef = ref(database, 'reviews');
+    const q = query(reviewsRef, orderByChild('freelancerId'), equalTo(freelancerId));
+    const snapshot = await get(q);
+
+    const reviews: Review[] = [];
+    if (snapshot.exists()) {
+        snapshot.forEach(childSnapshot => {
+            reviews.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+        });
+    }
+    // Sort by newest first
+    return reviews.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
 }
 
 

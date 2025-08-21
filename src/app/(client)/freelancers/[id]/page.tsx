@@ -1,38 +1,47 @@
 
 'use client';
 import { useState, useEffect, use } from 'react';
-import { getFreelancerById, recordProfileView } from '@/lib/firebase';
-import type { Freelancer } from '@/lib/mock-data';
+import { getFreelancerById, recordProfileView, getReviewsForFreelancer } from '@/lib/firebase';
+import type { Freelancer, Review } from '@/lib/mock-data';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, MessageSquare, CheckCircle, IndianRupee, Loader2 } from 'lucide-react';
+import { Globe, MessageSquare, CheckCircle, IndianRupee, Loader2, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { AddReviewDialog } from '@/components/add-review-dialog';
+import { useAuth } from '@/hooks/use-auth';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function FreelancerProfilePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
   const { id } = params;
 
   const [freelancer, setFreelancer] = useState<Freelancer | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      if (!id) return;
+  const { user, userProfile } = useAuth();
+  
+  const fetchFreelancerData = async () => {
+    if (!id) return;
       setIsLoading(true);
       try {
-        const fetchedFreelancer = await getFreelancerById(id);
+        const [fetchedFreelancer, fetchedReviews] = await Promise.all([
+            getFreelancerById(id),
+            getReviewsForFreelancer(id)
+        ]);
+
         if (!fetchedFreelancer) {
           notFound();
         } else {
-          // Ensure uid is set for existing freelancers
           setFreelancer({ ...fetchedFreelancer, uid: id });
-          // Record the profile view - fire and forget
-          recordProfileView(id);
+          setReviews(fetchedReviews);
+          if (user?.uid !== id) {
+             recordProfileView(id);
+          }
         }
       } catch (error) {
         console.error("Error loading freelancer data", error);
@@ -41,8 +50,11 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
       finally {
         setIsLoading(false);
       }
-    }
-    loadData();
+  }
+
+
+  useEffect(() => {
+    fetchFreelancerData();
   }, [id]);
 
 
@@ -58,6 +70,8 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
     return notFound();
   }
 
+  const isClient = user && userProfile?.role === 'client';
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -71,6 +85,14 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
               </Avatar>
               <h1 className="text-2xl font-bold font-headline">{freelancer.name}</h1>
               <p className="text-muted-foreground mb-4">{freelancer.role}</p>
+
+              {freelancer.averageRating && freelancer.averageRating > 0 && (
+                <div className="flex justify-center items-center gap-2 mb-4 text-amber-500">
+                    <Star className="w-5 h-5 fill-current" />
+                    <span className="font-bold text-lg text-foreground">{freelancer.averageRating.toFixed(1)}</span>
+                    <span className="text-muted-foreground text-sm">({freelancer.reviewCount} reviews)</span>
+                </div>
+              )}
 
               <div className="flex flex-wrap justify-center gap-2 mb-6">
                 {freelancer.skills?.map((skill) => (
@@ -88,12 +110,15 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
                 </div>
               </div>
             </CardContent>
-            <div className="p-6 border-t">
+            <div className="p-6 border-t space-y-2">
               <Button asChild className="w-full">
                 <Link href={`/discover/messages?freelancerId=${freelancer.uid}`}>
                     <MessageSquare className="mr-2 h-4 w-4" /> Contact {freelancer.name?.split(' ')[0]}
                 </Link>
               </Button>
+              {isClient && (
+                  <AddReviewDialog freelancer={freelancer} onReviewAdded={fetchFreelancerData} />
+              )}
             </div>
           </Card>
         </div>
@@ -108,6 +133,36 @@ export default function FreelancerProfilePage({ params: paramsPromise }: { param
                     <p className="text-muted-foreground whitespace-pre-wrap">{freelancer.bio}</p>
                 </CardContent>
             </Card>
+            
+            {reviews.length > 0 && (
+                <Card className="bg-background/60 backdrop-blur-xl">
+                    <CardHeader>
+                        <CardTitle>Client Reviews</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        {reviews.map(review => (
+                            <div key={review.id} className="flex gap-4">
+                                <Avatar>
+                                    <AvatarImage src={review.clientAvatarUrl} />
+                                    <AvatarFallback>{review.clientName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <p className="font-semibold">{review.clientName}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(review.createdAt as string), { addSuffix: true })}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        {[...Array(5)].map((_, i) => (
+                                             <Star key={i} className={cn("h-4 w-4", i < review.rating ? "text-amber-400 fill-amber-400" : "text-muted-foreground/30")} />
+                                        ))}
+                                    </div>
+                                    <p className="mt-2 text-sm text-muted-foreground">{review.comment}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+            )}
 
             <Card className="bg-background/60 backdrop-blur-xl">
                 <CardHeader>

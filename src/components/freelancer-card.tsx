@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Freelancer } from '@/lib/mock-data';
-import { ArrowRight, IndianRupee } from 'lucide-react';
+import { ArrowRight, IndianRupee, Star } from 'lucide-react';
 
 interface FreelancerCardProps {
   freelancer: Freelancer;
@@ -25,8 +25,8 @@ export function FreelancerCard({ freelancer }: FreelancerCardProps) {
           <p className="text-sm text-muted-foreground">{freelancer.role}</p>
         </div>
       </CardHeader>
-      <CardContent className="flex-1 px-4 pb-4">
-        <div className="flex flex-wrap gap-2 mb-4">
+      <CardContent className="flex-1 px-4 pb-4 space-y-4">
+        <div className="flex flex-wrap gap-2">
           {freelancer.skills.slice(0, 3).map((skill) => (
             <Badge key={skill} variant="secondary">
               {skill}
@@ -37,6 +37,17 @@ export function FreelancerCard({ freelancer }: FreelancerCardProps) {
         <div className="flex justify-between items-center text-sm text-muted-foreground">
           <span>{freelancer.location}</span>
           <span className="font-semibold text-foreground flex items-center gap-1">₹{freelancer.rate}/hr</span>
+        </div>
+         <div className="flex items-center gap-1 text-sm text-amber-500">
+            {freelancer.averageRating && freelancer.averageRating > 0 ? (
+                <>
+                    <Star className="w-4 h-4 fill-current" />
+                    <span className="font-bold text-foreground">{freelancer.averageRating.toFixed(1)}</span>
+                    <span className="text-muted-foreground">({freelancer.reviewCount} reviews)</span>
+                </>
+            ) : (
+                <span className="text-muted-foreground text-xs">No reviews yet</span>
+            )}
         </div>
       </CardContent>
       <CardFooter className="p-2 bg-transparent">
