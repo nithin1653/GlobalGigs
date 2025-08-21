@@ -102,9 +102,9 @@ export default function Chatbot() {
                                                      )}
 
                                                     <div className={cn(
-                                                        'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm',
+                                                        'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
                                                         message.role === 'user'
-                                                            ? 'bg-primary text-primary-foreground rounded-br-none'
+                                                            ? 'bg-primary text-white rounded-br-none'
                                                             : 'bg-muted rounded-bl-none'
                                                     )} dangerouslySetInnerHTML={{ __html: marked(message.content) }}></div>
 
