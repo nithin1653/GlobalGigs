@@ -2,7 +2,7 @@
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
-import { chatWithAgent } from '@/ai/flows/agent';
+import { chatWithAgent as chatWithAgentFlow } from '@/ai/flows/agent';
 import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus, updateGig, addReviewForFreelancer } from '@/lib/firebase';
 import type { Freelancer, PortfolioItem, GigProposal, Gig, Review } from '@/lib/mock-data';
 import { z } from 'zod';
@@ -309,7 +309,7 @@ export async function handleSubmitReview(reviewData: Omit<Review, 'id' | 'create
 // Chatbot Action
 export async function chatWithAgent(history: any[], newMessage: string) {
     try {
-      const result = await chatWithAgent(history, newMessage);
+      const result = await chatWithAgentFlow(history, newMessage);
       return result;
     } catch (error) {
       console.error("[Action Error] Chatbot failed", error);
