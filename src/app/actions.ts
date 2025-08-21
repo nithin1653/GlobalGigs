@@ -77,7 +77,7 @@ const updateProfileSchema = z.object({
 });
 
 
-export async function handleUpdateProfile(uid: string, data: Partial<Omit<Freelancer, 'id' | 'experience' | 'portfolio' | 'availability' | 'category' | 'avatarUrl'>>) {
+export async function handleUpdateProfile(uid: string, data: Partial<Omit<Freelancer, 'id' | 'experience' | 'portfolio' | 'category' | 'avatarUrl'>>) {
     try {
         await updateFreelancerProfile(uid, data);
         return { success: true };

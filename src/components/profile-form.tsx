@@ -29,13 +29,20 @@ import { useAuth } from '@/hooks/use-auth';
 import { getFreelancerById } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ExperienceForm } from '@/components/experience-form';
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   role: z.string().min(2, { message: 'Role is required.' }),
   rate: z.coerce.number().min(1, { message: 'Rate must be a positive number.' }),
   location: z.string().min(2, { message: 'Location is required.' }),
+  availability: z.enum(['Full-time', 'Part-time', 'Unavailable']),
   bio: z.string().max(500, { message: 'Bio cannot exceed 500 characters.' }),
   existingSkills: z.string().min(1, { message: 'Please list at least one skill.'}),
   pastExperiences: z.string().min(10, { message: 'Please describe your past experiences.'}),
@@ -80,6 +87,7 @@ export default function ProfileForm() {
             role: freelancerData.role,
             rate: freelancerData.rate,
             location: freelancerData.location,
+            availability: freelancerData.availability,
             bio: freelancerData.bio,
             existingSkills: freelancerData.skills.join(', '),
             pastExperiences: pastExperiences,
@@ -106,6 +114,7 @@ export default function ProfileForm() {
         role: data.role,
         rate: data.rate,
         location: data.location,
+        availability: data.availability,
         bio: data.bio,
         skills: data.existingSkills.split(',').map(s => s.trim()).filter(Boolean),
         experience: data.experience.map(exp => ({ ...exp, id: 0, description: exp.description || '' })), // id is a placeholder
@@ -211,6 +220,24 @@ export default function ProfileForm() {
                 <FormItem><FormLabel>Location</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
+             <FormField control={form.control} name="availability" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Availability</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your availability" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="Full-time">Full-time</SelectItem>
+                      <SelectItem value="Part-time">Part-time</SelectItem>
+                      <SelectItem value="Unavailable">Unavailable</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
             <FormField control={form.control} name="bio" render={({ field }) => (
               <FormItem><FormLabel>Bio</FormLabel><FormControl><Textarea rows={5} {...field} /></FormControl><FormMessage /></FormItem>
             )} />

@@ -84,10 +84,12 @@ export default function FreelancerLayout({
               <span className="">GlobalGigs</span>
             </Link>
         </header>
-
-        <main className="flex-1 flex flex-col gap-4 p-0 lg:gap-6 lg:p-6 bg-background overflow-hidden">
-            {children}
-        </main>
+        
+        <ScrollArea className="flex-1">
+            <main className="flex-1 flex flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+                {children}
+            </main>
+        </ScrollArea>
         
         {/* Mobile Bottom Nav */}
         <footer className="md:hidden sticky bottom-0 z-10 border-t bg-muted/40 p-2 shrink-0">
