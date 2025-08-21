@@ -76,9 +76,11 @@ const agentPrompt = ai.definePrompt({
 
 
 export async function chatWithAgentFlow(history: any[], newMessage: string) {
-    const response = await agentPrompt.generate({
-        history,
+    const response = await ai.generate({
         prompt: newMessage,
+        history,
+        system: agentPrompt.system,
+        tools: agentPrompt.tools,
     });
     return response.text;
 }
