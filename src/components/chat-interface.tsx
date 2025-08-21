@@ -210,11 +210,11 @@ export default function ChatInterface() {
                             <div className={cn(
                                 'max-w-xs lg:max-w-md p-3 rounded-2xl',
                                 message.senderId === user?.uid
-                                    ? 'bg-primary text-primary-foreground rounded-br-none'
-                                    : 'bg-muted rounded-bl-none'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-muted-foreground'
                                 )}
                             >
-                                <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                                <p className="text-sm whitespace-pre-wrap text-white">{message.text}</p>
                             </div>
                             </div>
                         );
