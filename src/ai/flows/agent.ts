@@ -78,6 +78,7 @@ This is the quiz flow:
 5. When calling the tool, combine the answers into a single query string. For example: "Expert Web & App Development React Node.js".
 6. After getting the results from the tool, present the freelancers to the user in a nicely formatted list. If no freelancers are found, say so.
 7. End the conversation by adding [COMPLETE] to the end of your final message. Do not ask any more questions.
+Important: Do not repeat questions the user has already answered in the history. Always move to the next step.
 `;
 
 
