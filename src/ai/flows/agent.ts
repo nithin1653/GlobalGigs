@@ -3,10 +3,10 @@
 'use server';
 
 /**
- * @fileOverview A conversational agent that can answer questions about the platform and suggest freelancers.
+ * @fileOverview A conversational agent that guides users through a series of questions to find and suggest freelancers.
  *
- * - chatWithAgentFlow - A function that handles the conversational logic.
- * - findFreelancers - A tool the agent can use to find and recommend freelancers.
+ * - chatWithAgentFlow - A function that handles the conversational quiz logic.
+ * - findFreelancers - A tool the agent can use to find and recommend freelancers based on collected criteria.
  */
 
 import { ai } from '@/ai/genkit';
@@ -17,14 +17,14 @@ const FreelancerSearchInputSchema = z.object({
   query: z
     .string()
     .describe(
-      'The user\'s request, such as "web developer", "logo designer", or "react expert".'
+      'The user\'s request, such as "web developer", "logo designer", or "react expert". This should be constructed from the quiz answers.'
     ),
 });
 
 const findFreelancers = ai.defineTool(
   {
     name: 'findFreelancers',
-    description: 'Finds available freelancers based on a query.',
+    description: 'Finds available freelancers based on a structured query from the quiz answers.',
     inputSchema: FreelancerSearchInputSchema,
     outputSchema: z.array(z.object({
         name: z.string(),
@@ -36,14 +36,25 @@ const findFreelancers = ai.defineTool(
   async ({ query }) => {
     console.log(`[Agent] Searching for freelancers with query: ${query}`);
     const allFreelancers = await getFreelancers();
+    
+    const queryTerms = query.toLowerCase().split(' ');
 
-    const filtered = allFreelancers.filter(f => 
-        (f.name.toLowerCase().includes(query.toLowerCase())) ||
-        (f.role.toLowerCase().includes(query.toLowerCase())) ||
-        (f.skills.some(skill => skill.toLowerCase().includes(query.toLowerCase()))) ||
-        (f.category.toLowerCase().includes(query.toLowerCase()))
-    ).sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)) // Sort by rating
-     .slice(0, 5); // Return top 5
+    const filtered = allFreelancers.filter(f => {
+        const profileText = [
+            f.name,
+            f.role,
+            ...f.skills,
+            f.category,
+            f.bio,
+            ...(f.experience?.map(e => `${e.role} ${e.description}`) || [])
+        ].join(' ').toLowerCase();
+
+        return queryTerms.every(term => profileText.includes(term));
+    })
+     .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)) // Sort by rating
+     .slice(0, 3); // Return top 3
+
+    console.log(`[Agent] Found ${filtered.length} freelancers.`);
 
     return filtered.map(f => ({
         name: f.name,
@@ -55,32 +66,27 @@ const findFreelancers = ai.defineTool(
 );
 
 
-const agentPrompt = ai.definePrompt({
-    name: 'chatbotAgentPrompt',
-    system: `You are a helpful assistant for GlobalGigs, a freelancer marketplace.
-    Your goal is to answer user questions about the platform and help them find the right talent.
-    You are friendly, professional, and concise.
+const agentSystemPrompt = `You are a helpful assistant for GlobalGigs, a freelancer marketplace.
+Your goal is to help users find the right talent by guiding them through a short quiz.
+You are friendly, professional, and you ask one question at a time.
 
-    If the user asks for a type of freelancer, use the findFreelancers tool to provide a list of top-rated experts.
-    When presenting freelancers, format your response nicely. Mention their name, role, skills, and rating if available.
-
-    For general questions about the website, answer them based on your knowledge of a typical freelance marketplace.
-    Example Topics:
-    - How to hire a freelancer
-    - How to post a job
-    - Payment protection
-    - How to become a freelancer
-    `,
-    tools: [findFreelancers],
-});
+This is the quiz flow:
+1. Start with a greeting and ask what category of freelancer they're looking for. Provide options: "Web & App Development", "Design & Creative", "Writing & Translation", "Marketing & Sales".
+2. Based on the category, ask for specific skills. For example, for "Web & App Development", you could ask "What specific skills do you need? (e.g., React, Node.js, Swift)". This should be a free-text question.
+3. Ask about the desired experience level. Provide options: "Entry-Level", "Intermediate", "Expert".
+4. After the last question, you MUST use the findFreelancers tool to search for freelancers based on all the collected answers.
+5. When calling the tool, combine the answers into a single query string. For example: "Expert Web & App Development React Node.js".
+6. After getting the results from the tool, present the freelancers to the user in a nicely formatted list. If no freelancers are found, say so.
+7. End the conversation. Do not ask any more questions.
+`;
 
 
-export async function chatWithAgentFlow(history: any[], newMessage: string) {
-    const response = await ai.generate({
-        prompt: newMessage,
+export async function chatWithAgentFlow(history: any[]) {
+    const {text} = await ai.generate({
         history,
-        system: agentPrompt.system,
-        tools: agentPrompt.tools,
+        system: agentSystemPrompt,
+        tools: [findFreelancers],
+        prompt: "Continue the conversation based on the history.",
     });
-    return response.text;
+    return text;
 }

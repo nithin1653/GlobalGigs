@@ -1,3 +1,4 @@
+
 // src/components/chatbot.tsx
 'use client';
 
@@ -17,43 +18,84 @@ import { useAuth } from '@/hooks/use-auth';
 interface ChatMessage {
     role: 'user' | 'assistant';
     content: string;
+    options?: string[];
+    isComplete?: boolean;
 }
+
+const parseMessage = (content: string): ChatMessage => {
+    const optionsMatch = content.match(/\[OPTIONS: (.*?)\]/);
+    const isCompleteMatch = content.match(/\[COMPLETE\]/);
+    let cleanContent = content;
+    
+    let options: string[] | undefined;
+    if (optionsMatch) {
+        options = optionsMatch[1].split(',').map(opt => opt.trim());
+        cleanContent = cleanContent.replace(optionsMatch[0], '').trim();
+    }
+
+    let isComplete = !!isCompleteMatch;
+    if (isCompleteMatch) {
+        cleanContent = cleanContent.replace(isCompleteMatch[0], '').trim();
+    }
+    
+    return { role: 'assistant', content: cleanContent, options, isComplete };
+};
+
 
 export default function Chatbot() {
     const [isOpen, setIsOpen] = useState(false);
-    const [history, setHistory] = useState<ChatMessage[]>([
-        { role: 'assistant', content: 'Hello! I\'m Gigi. How can I help you today? You can ask me about the platform or for freelancer recommendations.' }
-    ]);
+    const [history, setHistory] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { user, userProfile } = useAuth();
+    const [showTextInput, setShowTextInput] = useState(false);
 
 
     const scrollToBottom = () => {
-        if (scrollAreaRef.current) {
-            scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-        }
+        setTimeout(() => {
+            if (scrollAreaRef.current) {
+                scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+            }
+        }, 100);
     };
-
+    
     useEffect(() => {
         scrollToBottom();
     }, [history]);
 
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim()) return;
+    const startConversation = async () => {
+        setIsLoading(true);
+        setHistory([]);
+        try {
+            const initialGreeting = "Hi! I'm Gigi. I can help you find the perfect freelancer. Let's start with the category of work you're looking for. [OPTIONS: Web & App Development, Design & Creative, Writing & Translation, Marketing & Sales]";
+            const parsedMessage = parseMessage(initialGreeting);
+            setHistory([parsedMessage]);
+            setShowTextInput(!parsedMessage.options);
+        } catch (error) {
+            console.error("Chatbot error:", error);
+            const errorMessage: ChatMessage = { role: 'assistant', content: 'Sorry, I can\'t seem to start the conversation right now.' };
+            setHistory([errorMessage]);
+        } finally {
+            setIsLoading(false);
+        }
+    }
 
-        const userMessage: ChatMessage = { role: 'user', content: input };
+    const handleSendMessage = async (messageContent: string) => {
+        if (!messageContent.trim()) return;
+
+        const userMessage: ChatMessage = { role: 'user', content: messageContent };
         const newHistory = [...history, userMessage];
         setHistory(newHistory);
         setInput('');
         setIsLoading(true);
+        setShowTextInput(false);
 
         try {
-            const response = await chatWithAgent(newHistory, input);
-            const botMessage: ChatMessage = { role: 'assistant', content: response };
-            setHistory(prev => [...prev, botMessage]);
+            const response = await chatWithAgent(newHistory);
+            const parsedBotMessage = parseMessage(response);
+            setHistory(prev => [...prev, parsedBotMessage]);
+            setShowTextInput(!parsedBotMessage.options && !parsedBotMessage.isComplete);
         } catch (error) {
             console.error("Chatbot error:", error);
             const errorMessage: ChatMessage = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' };
@@ -62,6 +104,24 @@ export default function Chatbot() {
             setIsLoading(false);
         }
     };
+    
+    const handleFormSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSendMessage(input);
+    }
+    
+    const handleOptionClick = (option: string) => {
+        handleSendMessage(option);
+    }
+
+    const handleToggle = () => {
+        const nextIsOpen = !isOpen;
+        setIsOpen(nextIsOpen);
+        if (nextIsOpen) {
+            startConversation();
+        }
+    }
+
 
     return (
         <>
@@ -94,25 +154,37 @@ export default function Chatbot() {
                                     <ScrollArea className="h-full">
                                         <div ref={scrollAreaRef} className="p-6 space-y-4">
                                             {history.map((message, index) => (
-                                                <div key={index} className={cn('flex items-end gap-2', message.role === 'user' ? 'justify-end' : 'justify-start')}>
-                                                     {message.role === 'assistant' && (
-                                                        <Avatar className="h-8 w-8 self-start">
-                                                            <AvatarFallback className='bg-primary text-primary-foreground'><Bot /></AvatarFallback>
-                                                        </Avatar>
-                                                     )}
+                                                <div key={index}>
+                                                    <div className={cn('flex items-end gap-2', message.role === 'user' ? 'justify-end' : 'justify-start')}>
+                                                        {message.role === 'assistant' && (
+                                                            <Avatar className="h-8 w-8 self-start">
+                                                                <AvatarFallback className='bg-primary text-primary-foreground'><Bot /></AvatarFallback>
+                                                            </Avatar>
+                                                        )}
 
-                                                    <div className={cn(
-                                                        'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
-                                                        message.role === 'user'
-                                                            ? 'bg-primary text-white rounded-br-none'
-                                                            : 'bg-muted rounded-bl-none'
-                                                    )} dangerouslySetInnerHTML={{ __html: marked(message.content) }}></div>
+                                                        <div className={cn(
+                                                            'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
+                                                            message.role === 'user'
+                                                                ? 'bg-primary text-white rounded-br-none'
+                                                                : 'bg-muted rounded-bl-none',
+                                                            message.role === 'assistant' && 'text-white'
+                                                        )} dangerouslySetInnerHTML={{ __html: marked(message.content) }}></div>
 
-                                                    {message.role === 'user' && (
-                                                         <Avatar className="h-8 w-8 self-start">
-                                                            <AvatarImage src={userProfile?.avatarUrl} />
-                                                            <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
-                                                        </Avatar>
+                                                        {message.role === 'user' && (
+                                                            <Avatar className="h-8 w-8 self-start">
+                                                                <AvatarImage src={userProfile?.avatarUrl} />
+                                                                <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                                                            </Avatar>
+                                                        )}
+                                                    </div>
+                                                     {message.role === 'assistant' && message.options && (
+                                                        <div className="flex flex-wrap gap-2 mt-2 ml-10">
+                                                            {message.options.map(option => (
+                                                                <Button key={option} size="sm" variant="outline" onClick={() => handleOptionClick(option)} disabled={isLoading}>
+                                                                    {option}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
                                                     )}
                                                 </div>
                                             ))}
@@ -130,17 +202,19 @@ export default function Chatbot() {
                                     </ScrollArea>
                                 </CardContent>
                                 <CardFooter className="border-t bg-background/30 pt-6">
-                                    <form onSubmit={handleSendMessage} className="flex w-full items-center gap-2">
-                                        <Input
-                                            value={input}
-                                            onChange={(e) => setInput(e.target.value)}
-                                            placeholder="Ask a question..."
-                                            disabled={isLoading}
-                                        />
-                                        <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
-                                        </Button>
-                                    </form>
+                                    {showTextInput && (
+                                        <form onSubmit={handleFormSubmit} className="flex w-full items-center gap-2">
+                                            <Input
+                                                value={input}
+                                                onChange={(e) => setInput(e.target.value)}
+                                                placeholder="Ask a question..."
+                                                disabled={isLoading}
+                                            />
+                                            <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                                                {isLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Send className="h-4 w-4" />}
+                                            </Button>
+                                        </form>
+                                    )}
                                 </CardFooter>
                             </Card>
                         </motion.div>
@@ -149,8 +223,8 @@ export default function Chatbot() {
 
                 <Button
                     size="icon"
-                    className="rounded-full h-16 w-16 shadow-lg mt-4 flex items-center justify-center"
-                    onClick={() => setIsOpen(prev => !prev)}
+                    className="rounded-full h-16 w-16 shadow-lg mt-4"
+                    onClick={handleToggle}
                 >
                     <AnimatePresence initial={false} mode="wait">
                         <motion.div
@@ -159,6 +233,7 @@ export default function Chatbot() {
                             animate={{ opacity: 1, rotate: 0, scale: 1 }}
                             exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
                             transition={{ duration: 0.2 }}
+                            className="flex items-center justify-center"
                         >
                             {isOpen ? <X className="h-8 w-8"/> : <MessageSquare className="h-8 w-8" />}
                         </motion.div>
