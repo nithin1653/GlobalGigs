@@ -22,7 +22,7 @@ interface ChatMessage {
 export default function Chatbot() {
     const [isOpen, setIsOpen] = useState(false);
     const [history, setHistory] = useState<ChatMessage[]>([
-        { role: 'assistant', content: 'Hello! How can I help you today? You can ask me about the platform or for freelancer recommendations.' }
+        { role: 'assistant', content: 'Hello! I\'m Gigi. How can I help you today? You can ask me about the platform or for freelancer recommendations.' }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -85,8 +85,8 @@ export default function Chatbot() {
                                             <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 border-2 border-background"></span>
                                         </div>
                                         <div>
-                                            <CardTitle>GlobalGigs Assistant</CardTitle>
-                                            <CardDescription>Ready to help</CardDescription>
+                                            <CardTitle>Gigi Assistant</CardTitle>
+                                            <CardDescription>Your AI assistant</CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>
@@ -129,7 +129,7 @@ export default function Chatbot() {
                                         </div>
                                     </ScrollArea>
                                 </CardContent>
-                                <CardFooter>
+                                <CardFooter className="border-t bg-background/30 pt-6">
                                     <form onSubmit={handleSendMessage} className="flex w-full items-center gap-2">
                                         <Input
                                             value={input}
@@ -149,7 +149,7 @@ export default function Chatbot() {
 
                 <Button
                     size="icon"
-                    className="rounded-full h-16 w-16 shadow-lg mt-4"
+                    className="rounded-full h-16 w-16 shadow-lg mt-4 flex items-center justify-center"
                     onClick={() => setIsOpen(prev => !prev)}
                 >
                     <AnimatePresence initial={false} mode="wait">
