@@ -181,10 +181,8 @@ export default function ChatInterface() {
         <div className="flex-1 flex flex-col min-h-0">
             {activeConversation ? (
             <>
-                {/* Header is now part of the top bar */}
-
-                <ScrollArea className="flex-1" viewportRef={viewportRef}>
-                    <div className="space-y-6 p-6">
+                <ScrollArea className="flex-1">
+                    <div ref={viewportRef} className="space-y-6 p-6">
                         {messages.map((message) => {
                         const isProposal = message.metadata?.type === 'gig-proposal';
 
