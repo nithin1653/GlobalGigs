@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 
 interface ChatMessage {
-    role: 'user' | 'assistant';
+    role: 'user' | 'assistant' | 'tool';
     content: string;
     options?: string[];
     isComplete?: boolean;
@@ -68,9 +68,10 @@ export default function Chatbot() {
         setIsLoading(true);
         setHistory([]);
         try {
-            const initialGreeting = "Hi! I'm Gigi. I can help you find the perfect freelancer. Let's start with the category of work you're looking for. [OPTIONS: Web & App Development, Design & Creative, Writing & Translation, Marketing & Sales]";
-            const parsedMessage = parseMessage(initialGreeting);
-            setHistory([parsedMessage]);
+            const initialMessage: ChatMessage = { role: 'user', content: 'Hi, I need help finding a freelancer.' };
+            const response = await chatWithAgent([initialMessage]);
+            const parsedMessage = parseMessage(response);
+            setHistory([initialMessage, parsedMessage]);
             setShowTextInput(!parsedMessage.options);
         } catch (error) {
             console.error("Chatbot error:", error);
@@ -117,7 +118,7 @@ export default function Chatbot() {
     const handleToggle = () => {
         const nextIsOpen = !isOpen;
         setIsOpen(nextIsOpen);
-        if (nextIsOpen) {
+        if (nextIsOpen && history.length === 0) {
             startConversation();
         }
     }
@@ -153,41 +154,44 @@ export default function Chatbot() {
                                 <CardContent className="flex-1 overflow-hidden p-0">
                                     <ScrollArea className="h-full">
                                         <div ref={scrollAreaRef} className="p-6 space-y-4">
-                                            {history.map((message, index) => (
-                                                <div key={index}>
-                                                    <div className={cn('flex items-end gap-2', message.role === 'user' ? 'justify-end' : 'justify-start')}>
-                                                        {message.role === 'assistant' && (
-                                                            <Avatar className="h-8 w-8 self-start">
-                                                                <AvatarFallback className='bg-primary text-primary-foreground'><Bot /></AvatarFallback>
-                                                            </Avatar>
-                                                        )}
+                                            {history.map((message, index) => {
+                                                // Don't render the initial user message
+                                                if(message.role === 'user' && index === 0) return null;
+                                                return (
+                                                    <div key={index}>
+                                                        <div className={cn('flex items-end gap-2', message.role === 'user' ? 'justify-end' : 'justify-start')}>
+                                                            {message.role === 'assistant' && (
+                                                                <Avatar className="h-8 w-8 self-start">
+                                                                    <AvatarFallback className='bg-primary text-primary-foreground'><Bot /></AvatarFallback>
+                                                                </Avatar>
+                                                            )}
 
-                                                        <div className={cn(
-                                                            'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
-                                                            message.role === 'user'
-                                                                ? 'bg-primary text-white rounded-br-none'
-                                                                : 'bg-muted rounded-bl-none',
-                                                            message.role === 'assistant' && 'text-white'
-                                                        )} dangerouslySetInnerHTML={{ __html: marked(message.content) }}></div>
+                                                            <div className={cn(
+                                                                'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
+                                                                message.role === 'user'
+                                                                    ? 'bg-primary text-white rounded-br-none'
+                                                                    : 'bg-muted rounded-bl-none',
+                                                                'text-white' // Make all text white
+                                                            )} dangerouslySetInnerHTML={{ __html: marked(message.content) }}></div>
 
-                                                        {message.role === 'user' && (
-                                                            <Avatar className="h-8 w-8 self-start">
-                                                                <AvatarImage src={userProfile?.avatarUrl} />
-                                                                <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
-                                                            </Avatar>
+                                                            {message.role === 'user' && (
+                                                                <Avatar className="h-8 w-8 self-start">
+                                                                    <AvatarImage src={userProfile?.avatarUrl} />
+                                                                    <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                                                                </Avatar>
+                                                            )}
+                                                        </div>
+                                                        {message.role === 'assistant' && message.options && (
+                                                            <div className="flex flex-wrap gap-2 mt-2 ml-10">
+                                                                {message.options.map(option => (
+                                                                    <Button key={option} size="sm" variant="outline" onClick={() => handleOptionClick(option)} disabled={isLoading}>
+                                                                        {option}
+                                                                    </Button>
+                                                                ))}
+                                                            </div>
                                                         )}
                                                     </div>
-                                                     {message.role === 'assistant' && message.options && (
-                                                        <div className="flex flex-wrap gap-2 mt-2 ml-10">
-                                                            {message.options.map(option => (
-                                                                <Button key={option} size="sm" variant="outline" onClick={() => handleOptionClick(option)} disabled={isLoading}>
-                                                                    {option}
-                                                                </Button>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                            )})}
                                             {isLoading && (
                                                 <div className="flex justify-start items-end gap-2">
                                                     <Avatar className="h-8 w-8 self-start">
@@ -201,7 +205,7 @@ export default function Chatbot() {
                                         </div>
                                     </ScrollArea>
                                 </CardContent>
-                                <CardFooter className="border-t bg-background/30 pt-6">
+                                <CardFooter className="border-t bg-background/80 pt-6">
                                     {showTextInput && (
                                         <form onSubmit={handleFormSubmit} className="flex w-full items-center gap-2">
                                             <Input

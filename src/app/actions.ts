@@ -307,9 +307,9 @@ export async function handleSubmitReview(reviewData: Omit<Review, 'id' | 'create
 }
 
 // Chatbot Action
-export async function chatWithAgent(history: any[], newMessage: string) {
+export async function chatWithAgent(history: any[]) {
     try {
-      const result = await chatWithAgentFlow(history, newMessage);
+      const result = await chatWithAgentFlow(history);
       return result;
     } catch (error) {
       console.error("[Action Error] Chatbot failed", error);
