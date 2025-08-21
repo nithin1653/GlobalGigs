@@ -96,7 +96,7 @@ export function AddReviewDialog({ freelancer, onReviewAdded }: AddReviewDialogPr
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button>Write a Review</Button>
+        <Button className="w-full">Write a Review</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <Form {...form}>
