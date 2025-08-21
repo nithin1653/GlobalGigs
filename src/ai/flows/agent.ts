@@ -1,10 +1,11 @@
+
 // src/ai/flows/agent.ts
 'use server';
 
 /**
  * @fileOverview A conversational agent that can answer questions about the platform and suggest freelancers.
  *
- * - chatWithAgent - A function that handles the conversational logic.
+ * - chatWithAgentFlow - A function that handles the conversational logic.
  * - findFreelancers - A tool the agent can use to find and recommend freelancers.
  */
 
@@ -74,7 +75,7 @@ const agentPrompt = ai.definePrompt({
 });
 
 
-export async function chatWithAgent(history: any[], newMessage: string) {
+export async function chatWithAgentFlow(history: any[], newMessage: string) {
     const response = await agentPrompt.generate({
         history,
         prompt: newMessage,

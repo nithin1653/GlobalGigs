@@ -2,7 +2,7 @@
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
-import { chatWithAgent as chatWithAgentFlow } from '@/ai/flows/agent';
+import { chatWithAgentFlow } from '@/ai/flows/agent';
 import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus, updateGig, addReviewForFreelancer } from '@/lib/firebase';
 import type { Freelancer, PortfolioItem, GigProposal, Gig, Review } from '@/lib/mock-data';
 import { z } from 'zod';
