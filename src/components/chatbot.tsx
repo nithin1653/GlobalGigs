@@ -152,14 +152,13 @@ export default function Chatbot() {
                     className="rounded-full h-16 w-16 shadow-lg mt-4"
                     onClick={() => setIsOpen(prev => !prev)}
                 >
-                    <AnimatePresence initial={false}>
+                    <AnimatePresence initial={false} mode="wait">
                         <motion.div
                             key={isOpen ? 'close' : 'open'}
                             initial={{ opacity: 0, rotate: -90, scale: 0.5 }}
                             animate={{ opacity: 1, rotate: 0, scale: 1 }}
                             exit={{ opacity: 0, rotate: 90, scale: 0.5 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute inset-0 flex items-center justify-center"
                         >
                             {isOpen ? <X className="h-8 w-8"/> : <MessageSquare className="h-8 w-8" />}
                         </motion.div>
