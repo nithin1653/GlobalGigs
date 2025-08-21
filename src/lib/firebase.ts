@@ -386,17 +386,20 @@ export async function addReviewForFreelancer(reviewData: Omit<Review, 'id' | 'cr
 
 export async function getReviewsForFreelancer(freelancerId: string): Promise<Review[]> {
     const reviewsRef = ref(database, 'reviews');
-    const q = query(reviewsRef, orderByChild('freelancerId'), equalTo(freelancerId));
-    const snapshot = await get(q);
+    const snapshot = await get(reviewsRef);
 
-    const reviews: Review[] = [];
+    const allReviews: Review[] = [];
     if (snapshot.exists()) {
         snapshot.forEach(childSnapshot => {
-            reviews.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+            const review = { id: childSnapshot.key!, ...childSnapshot.val() };
+            allReviews.push(review);
         });
     }
+    
+    const freelancerReviews = allReviews.filter(review => review.freelancerId === freelancerId);
+
     // Sort by newest first
-    return reviews.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
+    return freelancerReviews.sort((a, b) => new Date(b.createdAt as string).getTime() - new Date(a.createdAt as string).getTime());
 }
 
 
