@@ -2,43 +2,73 @@
 // src/ai/flows/agent.ts
 'use server';
 
-/**
- * @fileOverview A conversational agent that guides users through a series of questions to find and suggest freelancers.
- *
- * - chatWithAgentFlow - A function that handles the conversational quiz logic.
- * - findFreelancers - A tool the agent can use to find and recommend freelancers based on collected criteria.
- */
-
-import { ai } from '@/ai/genkit';
 import { getFreelancers } from '@/lib/firebase';
-import { z } from 'genkit';
+import type { Freelancer } from '@/lib/mock-data';
 
-const FreelancerSearchInputSchema = z.object({
-  query: z
-    .string()
-    .describe(
-      'The user\'s request, such as "web developer", "logo designer", or "react expert". This should be constructed from the quiz answers.'
-    ),
-});
+export type QuizState = {
+  category?: string;
+  skills?: string;
+  experience?: string;
+};
 
-const findFreelancers = ai.defineTool(
-  {
-    name: 'findFreelancers',
-    description: 'Finds available freelancers based on a structured query from the quiz answers.',
-    outputSchema: z.array(z.object({
-        name: z.string(),
-        role: z.string(),
-        skills: z.array(z.string()),
-        averageRating: z.number().optional(),
-    })),
-  },
-  async ({ query }) => {
-    console.log(`[Agent] Searching for freelancers with query: ${query}`);
-    const allFreelancers = await getFreelancers();
+function formatOptions(options: string[]): string {
+    return `[OPTIONS: ${options.join(', ')}]`;
+}
+
+function presentFreelancers(freelancers: Freelancer[]): string {
+    if (freelancers.length === 0) {
+        return "I couldn't find any freelancers matching your criteria. Please try again with different keywords. [COMPLETE]";
+    }
+    const freelancerList = freelancers.map(f => `- **${f.name}** (${f.role}) - Skills: ${f.skills.join(', ')} - Rating: ${f.averageRating?.toFixed(1) || 'N/A'}`).join('\n');
+    return `Here are some top freelancers I found for you:\n${freelancerList}\n\nWould you like to start over? [COMPLETE]`;
+}
+
+export async function chatWithAgentFlow(state: QuizState, userInput?: string) {
+  // 1. Start of conversation or if no category is set
+  if (!state.category) {
+    // If userInput is one of the valid categories, we set it.
+    const categories = ["Web & App Development", "Design & Creative", "Writing & Translation", "Marketing & Sales"];
+    if (userInput && categories.includes(userInput)) {
+        const newState = { ...state, category: userInput };
+        return {
+            state: newState,
+            text: `Great! What specific skills are you looking for within ${userInput}? (e.g., React, Node.js, Swift)`
+        };
+    }
+    // Otherwise, we ask the question.
+    return {
+      state,
+      text: `Hello! Let's find the right talent for you.\n\nFirst, which category are you interested in? ${formatOptions(categories)}`
+    };
+  }
+
+  // 2. Category is set, but skills are not.
+  if (!state.skills) {
+    if (!userInput) { // Should not happen if UI sends input
+        return { state, text: `What specific skills are you looking for within ${state.category}?` };
+    }
+    const newState = { ...state, skills: userInput };
+    const experienceLevels = ["Entry-Level", "Intermediate", "Expert"];
+    return {
+      state: newState,
+      text: `Got it. You need skills like **${userInput}**. \n\nWhat experience level is required? ${formatOptions(experienceLevels)}`
+    };
+  }
+
+  // 3. Category and skills are set, but experience is not.
+  if (!state.experience) {
+     if (!userInput) { // Should not happen if UI sends input
+        const experienceLevels = ["Entry-Level", "Intermediate", "Expert"];
+        return { state, text: `What experience level is required? ${formatOptions(experienceLevels)}` };
+    }
+    const newState = { ...state, experience: userInput };
+     const query = `${newState.experience} ${newState.category} ${newState.skills}`;
     
+    const allFreelancers = await getFreelancers();
     const queryTerms = query.toLowerCase().split(' ');
 
-    const filtered = allFreelancers.filter(f => {
+    const filtered = allFreelancers
+        .filter(f => {
         const profileText = [
             f.name,
             f.role,
@@ -46,48 +76,34 @@ const findFreelancers = ai.defineTool(
             f.category,
             f.bio,
             ...(f.experience?.map(e => `${e.role} ${e.description}`) || [])
-        ].join(' ').toLowerCase();
+        ]
+            .join(' ')
+            .toLowerCase();
 
         return queryTerms.every(term => profileText.includes(term));
-    })
-     .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)) // Sort by rating
-     .slice(0, 3); // Return top 3
-
-    console.log(`[Agent] Found ${filtered.length} freelancers.`);
-
-    return filtered.map(f => ({
-        name: f.name,
-        role: f.role,
-        skills: f.skills,
-        averageRating: f.averageRating
-    }));
+        })
+        .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
+        .slice(0, 3);
+    
+    return {
+      state: newState,
+      text: `Awesome! Searching for **${userInput}** freelancers...\n\n${presentFreelancers(filtered)}`
+    };
   }
-);
+  
+  // This case is for restarting the conversation after completion.
+  if (userInput) {
+      const emptyState: QuizState = {};
+      const categories = ["Web & App Development", "Design & Creative", "Writing & Translation", "Marketing & Sales"];
+       return {
+        state: emptyState,
+        text: `Let's start over! Which category are you interested in? ${formatOptions(categories)}`
+      };
+  }
 
-
-const agentSystemPrompt = `You are a helpful assistant for GlobalGigs, a freelancer marketplace.
-Your goal is to help users find the right talent by guiding them through a short quiz.
-You are friendly, professional, and you ask one question at a time.
-When providing multiple choice options, you MUST format them like this: [OPTIONS: Option 1, Option 2, Option 3]
-
-This is the quiz flow:
-1. Start with a greeting and ask what category of freelancer they're looking for. Provide these options: "Web & App Development", "Design & Creative", "Writing & Translation", "Marketing & Sales". You MUST use the [OPTIONS: ...] format for this.
-2. Based on the category, ask for specific skills. For example, for "Web & App Development", you could ask "What specific skills do you need? (e.g., React, Node.js, Swift)". This should be a free-text question.
-3. Ask about the desired experience level. Provide these options: "Entry-Level", "Intermediate", "Expert". You MUST use the [OPTIONS: ...] format for this.
-4. After the last question, you MUST use the findFreelancers tool to search for freelancers based on all the collected answers.
-5. When calling the tool, combine the answers into a single query string. For example: "Expert Web & App Development React Node.js".
-6. After getting the results from the tool, present the freelancers to the user in a nicely formatted list. If no freelancers are found, say so.
-7. End the conversation by adding [COMPLETE] to the end of your final message. Do not ask any more questions.
-Important: Do not repeat questions the user has already answered in the history. Always move to the next step.
-`;
-
-
-export async function chatWithAgentFlow(history: any[]) {
-    const {text} = await ai.generate({
-        history,
-        system: agentSystemPrompt,
-        tools: [findFreelancers],
-        prompt: "Continue the conversation based on the history.",
-    });
-    return text;
+  // Default fallback, should ideally not be reached
+  return {
+      state,
+      text: "I'm not sure how to proceed. Would you like to start over?"
+  }
 }

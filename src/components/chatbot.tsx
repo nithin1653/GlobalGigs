@@ -10,48 +10,52 @@ import { ScrollArea } from './ui/scroll-area';
 import { MessageSquare, Send, X, Loader2, Bot } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { chatWithAgent } from '@/app/actions';
+import type { QuizState } from '@/ai/flows/agent';
 import { marked } from 'marked';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 
 interface ChatMessage {
-    role: 'user' | 'assistant' | 'tool';
+    role: 'user' | 'assistant';
+    content: string;
+}
+
+interface ParsedResponse {
     content: string;
     options?: string[];
     isComplete?: boolean;
 }
 
-const parseMessage = (content: string): ChatMessage => {
-    const optionsMatch = content.match(/\[OPTIONS: (.*?)\]/);
-    const isCompleteMatch = content.match(/\[COMPLETE\]/);
-    let cleanContent = content;
+const parseResponse = (text: string): ParsedResponse => {
+    const optionsMatch = text.match(/\[OPTIONS: (.*?)\]/);
+    const isCompleteMatch = text.match(/\[COMPLETE\]/);
+    let content = text;
     
     let options: string[] | undefined;
     if (optionsMatch) {
         options = optionsMatch[1].split(',').map(opt => opt.trim());
-        cleanContent = cleanContent.replace(optionsMatch[0], '').trim();
+        content = content.replace(optionsMatch[0], '').trim();
     }
 
-    let isComplete = !!isCompleteMatch;
     if (isCompleteMatch) {
-        cleanContent = cleanContent.replace(isCompleteMatch[0], '').trim();
+        content = content.replace(isCompleteMatch[0], '').trim();
     }
     
-    return { role: 'assistant', content: cleanContent, options, isComplete };
+    return { content, options, isComplete: !!isCompleteMatch };
 };
-
 
 export default function Chatbot() {
     const [isOpen, setIsOpen] = useState(false);
     const [history, setHistory] = useState<ChatMessage[]>([]);
+    const [quizState, setQuizState] = useState<QuizState>({});
+    const [currentOptions, setCurrentOptions] = useState<string[]>([]);
+    const [isComplete, setIsComplete] = useState(false);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { user, userProfile } = useAuth();
-    const [showTextInput, setShowTextInput] = useState(false);
-
-
+    
     const scrollToBottom = () => {
         setTimeout(() => {
             if (scrollAreaRef.current) {
@@ -67,12 +71,18 @@ export default function Chatbot() {
     const startConversation = async () => {
         setIsLoading(true);
         setHistory([]);
+        setQuizState({});
+        setCurrentOptions([]);
+        setIsComplete(false);
+
         try {
-            const initialMessage: ChatMessage = { role: 'user', content: 'Hi, I need help finding a freelancer.' };
-            const response = await chatWithAgent([initialMessage]);
-            const parsedMessage = parseMessage(response);
-            setHistory([initialMessage, parsedMessage]);
-            setShowTextInput(!parsedMessage.options);
+            const response = await chatWithAgent({});
+            const parsed = parseResponse(response.text);
+            
+            setHistory([{ role: 'assistant', content: parsed.content }]);
+            setQuizState(response.state);
+            setCurrentOptions(parsed.options || []);
+            
         } catch (error) {
             console.error("Chatbot error:", error);
             const errorMessage: ChatMessage = { role: 'assistant', content: 'Sorry, I can\'t seem to start the conversation right now.' };
@@ -86,17 +96,22 @@ export default function Chatbot() {
         if (!messageContent.trim()) return;
 
         const userMessage: ChatMessage = { role: 'user', content: messageContent };
-        const newHistory = [...history, userMessage];
-        setHistory(newHistory);
+        setHistory(prev => [...prev, userMessage]);
         setInput('');
         setIsLoading(true);
-        setShowTextInput(false);
+        setCurrentOptions([]);
+
+        // If the conversation was complete, and user sends a message, we restart.
+        const stateToUse = isComplete ? {} : quizState;
 
         try {
-            const response = await chatWithAgent(newHistory);
-            const parsedBotMessage = parseMessage(response);
-            setHistory(prev => [...prev, parsedBotMessage]);
-            setShowTextInput(!parsedBotMessage.options && !parsedBotMessage.isComplete);
+            const response = await chatWithAgent(stateToUse, messageContent);
+            const parsed = parseResponse(response.text);
+
+            setHistory(prev => [...prev, { role: 'assistant', content: parsed.content }]);
+            setQuizState(response.state);
+            setCurrentOptions(parsed.options || []);
+            setIsComplete(parsed.isComplete || false);
         } catch (error) {
             console.error("Chatbot error:", error);
             const errorMessage: ChatMessage = { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' };
@@ -123,6 +138,7 @@ export default function Chatbot() {
         }
     }
 
+    const showTextInput = currentOptions.length === 0;
 
     return (
         <>
@@ -154,44 +170,32 @@ export default function Chatbot() {
                                 <CardContent className="flex-1 overflow-hidden p-0">
                                     <ScrollArea className="h-full">
                                         <div ref={scrollAreaRef} className="p-6 space-y-4">
-                                            {history.map((message, index) => {
-                                                // Don't render the initial user message
-                                                if(message.role === 'user' && index === 0) return null;
-                                                return (
-                                                    <div key={index}>
-                                                        <div className={cn('flex items-end gap-2', message.role === 'user' ? 'justify-end' : 'justify-start')}>
-                                                            {message.role === 'assistant' && (
-                                                                <Avatar className="h-8 w-8 self-start">
-                                                                    <AvatarFallback className='bg-primary text-primary-foreground'><Bot /></AvatarFallback>
-                                                                </Avatar>
-                                                            )}
+                                            {history.map((message, index) => (
+                                                <div key={index}>
+                                                    <div className={cn('flex items-end gap-2', message.role === 'user' ? 'justify-end' : 'justify-start')}>
+                                                        {message.role === 'assistant' && (
+                                                            <Avatar className="h-8 w-8 self-start">
+                                                                <AvatarFallback className='bg-primary text-primary-foreground'><Bot /></AvatarFallback>
+                                                            </Avatar>
+                                                        )}
 
-                                                            <div className={cn(
-                                                                'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
-                                                                message.role === 'user'
-                                                                    ? 'bg-primary text-white rounded-br-none'
-                                                                    : 'bg-muted rounded-bl-none',
-                                                                'text-white' // Make all text white
-                                                            )} dangerouslySetInnerHTML={{ __html: marked(message.content) }}></div>
+                                                        <div className={cn(
+                                                            'max-w-xs lg:max-w-sm p-3 rounded-2xl prose prose-sm prose-invert',
+                                                            message.role === 'user'
+                                                                ? 'bg-primary text-white rounded-br-none'
+                                                                : 'bg-muted rounded-bl-none',
+                                                            'text-white' // Make all text white
+                                                        )} dangerouslySetInnerHTML={{ __html: marked.parse(message.content) }}></div>
 
-                                                            {message.role === 'user' && (
-                                                                <Avatar className="h-8 w-8 self-start">
-                                                                    <AvatarImage src={userProfile?.avatarUrl} />
-                                                                    <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
-                                                                </Avatar>
-                                                            )}
-                                                        </div>
-                                                        {message.role === 'assistant' && message.options && (
-                                                            <div className="flex flex-wrap gap-2 mt-2 ml-10">
-                                                                {message.options.map(option => (
-                                                                    <Button key={option} size="sm" variant="outline" onClick={() => handleOptionClick(option)} disabled={isLoading}>
-                                                                        {option}
-                                                                    </Button>
-                                                                ))}
-                                                            </div>
+                                                        {message.role === 'user' && (
+                                                            <Avatar className="h-8 w-8 self-start">
+                                                                <AvatarImage src={userProfile?.avatarUrl} />
+                                                                <AvatarFallback>{userProfile?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                                                            </Avatar>
                                                         )}
                                                     </div>
-                                            )})}
+                                                </div>
+                                            ))}
                                             {isLoading && (
                                                 <div className="flex justify-start items-end gap-2">
                                                     <Avatar className="h-8 w-8 self-start">
@@ -205,8 +209,17 @@ export default function Chatbot() {
                                         </div>
                                     </ScrollArea>
                                 </CardContent>
-                                <CardFooter className="border-t bg-background/80 pt-6">
-                                    {showTextInput && (
+                                <CardFooter className="border-t pt-6 bg-muted/30">
+                                    {currentOptions.length > 0 && !isLoading && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {currentOptions.map(option => (
+                                                <Button key={option} size="sm" variant="outline" onClick={() => handleOptionClick(option)} disabled={isLoading}>
+                                                    {option}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {showTextInput && !isLoading && (
                                         <form onSubmit={handleFormSubmit} className="flex w-full items-center gap-2">
                                             <Input
                                                 value={input}
