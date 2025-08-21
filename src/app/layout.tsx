@@ -3,6 +3,7 @@ import './globals.css';
 import { Suspense } from 'react';
 import { AuthProvider } from '@/hooks/use-auth.js';
 import { Toaster } from '@/components/ui/toaster';
+import Chatbot from '@/components/chatbot';
 
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default function RootLayout({
                     {children}
                 </div>
                 <Toaster />
+                <Chatbot />
             </AuthProvider>
         </Suspense>
       </body>

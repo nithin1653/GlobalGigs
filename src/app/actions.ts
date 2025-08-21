@@ -2,6 +2,7 @@
 'use server';
 
 import { enhanceSkills, EnhanceSkillsInput } from '@/ai/flows/skill-enhancement';
+import { chatWithAgent } from '@/ai/flows/agent';
 import { updateFreelancerProfile, updateUserProfile, getUserProfile, createGigProposal, acceptGig, getParticipantData, sendMessage, updateGigProposalStatus, updateGig, addReviewForFreelancer } from '@/lib/firebase';
 import type { Freelancer, PortfolioItem, GigProposal, Gig, Review } from '@/lib/mock-data';
 import { z } from 'zod';
@@ -302,5 +303,16 @@ export async function handleSubmitReview(reviewData: Omit<Review, 'id' | 'create
         console.error(error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         return { success: false, error: errorMessage };
+    }
+}
+
+// Chatbot Action
+export async function chatWithAgent(history: any[], newMessage: string) {
+    try {
+      const result = await chatWithAgent(history, newMessage);
+      return result;
+    } catch (error) {
+      console.error("[Action Error] Chatbot failed", error);
+      return 'Sorry, I encountered an error. Please try again.';
     }
 }
