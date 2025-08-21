@@ -62,7 +62,6 @@ export async function chatWithAgentFlow(state: QuizState, userInput?: string) {
         return { state, text: `What experience level is required? ${formatOptions(experienceLevels)}` };
     }
     const newState = { ...state, experience: userInput };
-     const query = `${newState.experience} ${newState.category} ${newState.skills}`;
     
     const allFreelancers = await getFreelancers();
     
@@ -85,7 +84,7 @@ export async function chatWithAgentFlow(state: QuizState, userInput?: string) {
             ].join(' ').toLowerCase();
             
             const hasCategory = f.category.toLowerCase() === newState.category?.toLowerCase();
-            const hasSkills = skillTerms.some(term => f.skills.join(' ').toLowerCase().includes(term));
+            const hasSkills = skillTerms.some(term => (f.skills || []).join(' ').toLowerCase().includes(term));
             const hasOther = otherTerms.every(term => profileText.includes(term));
             
             return hasCategory && hasSkills && hasOther;
