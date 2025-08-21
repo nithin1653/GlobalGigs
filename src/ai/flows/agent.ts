@@ -65,22 +65,30 @@ export async function chatWithAgentFlow(state: QuizState, userInput?: string) {
      const query = `${newState.experience} ${newState.category} ${newState.skills}`;
     
     const allFreelancers = await getFreelancers();
-    const queryTerms = query.toLowerCase().split(' ');
+    
+    // Looser search logic
+    const skillTerms = (newState.skills || '').toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
+    const otherTerms = [
+        (newState.category || ''),
+        (newState.experience || '')
+    ].join(' ').toLowerCase().split(' ').filter(Boolean);
+
 
     const filtered = allFreelancers
         .filter(f => {
-        const profileText = [
-            f.name,
-            f.role,
-            ...f.skills,
-            f.category,
-            f.bio,
-            ...(f.experience?.map(e => `${e.role} ${e.description}`) || [])
-        ]
-            .join(' ')
-            .toLowerCase();
-
-        return queryTerms.every(term => profileText.includes(term));
+            const profileText = [
+                f.name,
+                f.role,
+                f.category,
+                f.bio,
+                ...(f.experience?.map(e => `${e.role} ${e.description}`) || [])
+            ].join(' ').toLowerCase();
+            
+            const hasCategory = f.category.toLowerCase() === newState.category?.toLowerCase();
+            const hasSkills = skillTerms.some(term => f.skills.join(' ').toLowerCase().includes(term));
+            const hasOther = otherTerms.every(term => profileText.includes(term));
+            
+            return hasCategory && hasSkills && hasOther;
         })
         .sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0))
         .slice(0, 3);
