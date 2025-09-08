@@ -13,30 +13,36 @@ interface FreelancerCardProps {
 }
 
 export function FreelancerCard({ freelancer }: FreelancerCardProps) {
+  const skills = Array.isArray(freelancer?.skills) ? freelancer.skills : [];
+  const displayName = freelancer?.name ?? 'Unnamed';
+  const nameInitial = freelancer?.name?.charAt(0) ?? 'U';
+  const avatarUrl = freelancer?.avatarUrl ?? '';
+  const location = freelancer?.location ?? '';
+  const rate = freelancer?.rate ?? 0;
   return (
     <Card className="flex flex-col overflow-hidden border-2 border-transparent transition-all duration-300 hover:border-primary hover:shadow-2xl bg-background/60 backdrop-blur-xl">
       <CardHeader className="flex flex-row items-center gap-4 p-4">
         <Avatar className="h-16 w-16 border-2 border-primary/50">
-          <AvatarImage src={freelancer.avatarUrl} alt={freelancer.name} />
-          <AvatarFallback>{freelancer.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={avatarUrl} alt={displayName} />
+          <AvatarFallback>{nameInitial}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
-          <h3 className="text-lg font-bold font-headline">{freelancer.name}</h3>
-          <p className="text-sm text-muted-foreground">{freelancer.role}</p>
+          <h3 className="text-lg font-bold font-headline">{displayName}</h3>
+          <p className="text-sm text-muted-foreground">{freelancer.role ?? 'Freelancer'}</p>
         </div>
       </CardHeader>
       <CardContent className="flex-1 px-4 pb-4 space-y-4">
         <div className="flex flex-wrap gap-2">
-          {freelancer.skills.slice(0, 3).map((skill) => (
+          {skills.slice(0, 3).map((skill) => (
             <Badge key={skill} variant="secondary">
               {skill}
             </Badge>
           ))}
-          {freelancer.skills.length > 3 && <Badge variant="outline">+{freelancer.skills.length - 3}</Badge>}
+          {skills.length > 3 && <Badge variant="outline">+{skills.length - 3}</Badge>}
         </div>
         <div className="flex justify-between items-center text-sm text-muted-foreground">
-          <span>{freelancer.location}</span>
-          <span className="font-semibold text-foreground flex items-center gap-1">₹{freelancer.rate}/hr</span>
+          <span>{location}</span>
+          <span className="font-semibold text-foreground flex items-center gap-1">₹{rate}/hr</span>
         </div>
          <div className="flex items-center gap-1 text-sm text-amber-500">
             {freelancer.averageRating && freelancer.averageRating > 0 ? (
